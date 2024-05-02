@@ -9,13 +9,13 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstdint>
 typedef unsigned char BYTE;
 
 using namespace std;
 
-int Dissassemble8080p(vector<BYTE> *codebuffer, int pc)
+int Dissassemble8080p(vector<uint8_t>& buffer, int pc)
 {
-  vector<BYTE>& buffer = *codebuffer;
   BYTE code = buffer[pc];
   int opbytes = 1;
   printf("%04x ", pc);
@@ -854,14 +854,14 @@ int main (int argc, char* argv[])
   fileSize = infile.tellg();
   infile.seekg(0, ios::beg);
 
-  vector<BYTE> buffer(fileSize);
-  infile.read((char*) &buffer[0], fileSize);
+  vector<uint8_t> buffer(fileSize);
+  infile.read(reinterpret_cast<char*>(buffer.data()), fileSize);
   infile.close();
 
   int pc = 0;
   while (pc < buffer.size())
   {
-    pc += Dissassemble8080p(&buffer, pc);
+    pc += Dissassemble8080p(buffer, pc);
   }
   
   return 0;

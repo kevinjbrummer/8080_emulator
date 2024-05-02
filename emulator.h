@@ -22,7 +22,7 @@ class Emulator
     uint8_t         l;
     uint16_t        sp;
     uint16_t        pc;
-    uint8_t         memory[65536]{};
+    vector<uint8_t> memory;
     ConditionCodes  cc;
     uint8_t         int_enable;
 
