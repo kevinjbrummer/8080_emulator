@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <vector>
 
 struct ConditionCodes {
   uint8_t z   = 1;
