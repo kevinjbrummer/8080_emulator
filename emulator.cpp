@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-typedef unsigned char BYTE;
 using namespace std;
 
 void Emulator::UnimplementedInstruction()
@@ -11,12 +10,18 @@ void Emulator::UnimplementedInstruction()
   exit(1);
 }
 
+uint16_t Emulator::Parity(uint16_t byte)
+{
+  return 0x00;
+}
+
 void Emulator::Emulate8080Op()
 {
-  BYTE opcode = memory[pc];
+  uint16_t opcode = memory[pc];
 
   switch (opcode)
   {
+    //NOP
     case 0x00:
     case 0x08:
     case 0x10:
@@ -29,7 +34,12 @@ void Emulator::Emulate8080Op()
     case 0xed:
     case 0xfd:
       break;
-    case 0x01: UnimplementedInstruction(); break;
+    //LXI B
+    case 0x01:
+      c = memory[pc + 1];
+      b = memory[pc + 2];
+      pc += 2;
+      break;
     case 0x02: UnimplementedInstruction(); break;
     case 0x03: UnimplementedInstruction(); break;
     case 0x04: UnimplementedInstruction(); break;
@@ -151,7 +161,16 @@ void Emulator::Emulate8080Op()
     case 0x7d: UnimplementedInstruction(); break;
     case 0x7e: UnimplementedInstruction(); break;
     case 0x7f: UnimplementedInstruction(); break;
-    case 0x80: UnimplementedInstruction(); break;
+    //ADD B
+    case 0x80: 
+      uint16_t answer = (uint16_t) a + (uint16_t) b;
+
+      cc.z = ((answer & 0xff) == 0);
+      cc.s = ((answer & 0x80) == 0);
+      cc.cy = (answer > 0xff);
+      cc.p = Parity(answer);
+      a = answer & 0xff;
+      break;
     case 0x81: UnimplementedInstruction(); break;
     case 0x82: UnimplementedInstruction(); break;
     case 0x83: UnimplementedInstruction(); break;
