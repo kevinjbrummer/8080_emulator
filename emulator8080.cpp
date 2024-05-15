@@ -273,10 +273,16 @@ void Emulator8080::Cycle()
     case 0xD1: Op0xD1(); break;
     case 0xD2: Op0xD2(code); break;
     case 0xD3: Op0xD3(code); break;
+    case 0xD4: Op0xD4(code); break;
     case 0xD5: Op0xD5(); break;
+    case 0xD6: Op0xD6(code); break;
+    case 0xD7: Op0xD7(); break;
     case 0xD8: Op0xD8(); break;
     case 0xDA: Op0xDA(code); break;
     case 0xDB: Op0xDB(code); break;
+    case 0xDC: Op0xDC(code); break;
+    case 0xDE: Op0xDE(code); break;
+    case 0xDF: Op0xDF(); break;
     case 0xE1: Op0xE1(); break;
     case 0xE3: Op0xE3(); break;
     case 0xE5: Op0xE5(); break;
@@ -1723,12 +1729,45 @@ void Emulator8080::Op0xD3(uint8_t* code)
   pc += 2;
 }
 
+void Emulator8080::Op0xD4(uint8_t* code)
+{
+  if (conditionCodes.cy != 1)
+  {
+    uint16_t address = (code[2]) << 8 | code[1];
+    uint16_t retAddress = pc + 3;
+    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    WriteMem(sp - 2, retAddress & 0xFF);
+    sp -= 2;
+    pc = address;
+  }
+  else
+  {
+    pc += 3;
+  }
+}
+
 void Emulator8080::Op0xD5()
 {
   sp -= 2;
   WriteMem(sp + 1, registers.d);
   WriteMem(sp, registers.e);
   pc++;
+}
+
+void Emulator8080::Op0xD6(uint8_t* code)
+{
+  uint16_t res = registers.a - code[1];
+  ArithFlagsA(res);
+  registers.a = (res & 0xFF);
+  pc += 2;
+}
+
+void Emulator8080::Op0xD7()
+{
+  WriteMem(sp - 1, (pc & 0xFF00) >> 8);
+  WriteMem(sp - 2, pc & 0xFF);
+  sp -= 2;
+  pc = 0x10;
 }
 
 void Emulator8080::Op0xD8()
@@ -1760,6 +1799,39 @@ void Emulator8080::Op0xDB(uint8_t* code)
 {
   //TODO: Implement IN
   pc += 2;
+}
+
+void Emulator8080::Op0xDC(uint8_t* code)
+{
+  if (conditionCodes.cy == 1)
+  {
+    uint16_t address = (code[2]) << 8 | code[1];
+    uint16_t retAddress = pc + 3;
+    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    WriteMem(sp - 2, retAddress & 0xFF);
+    sp -= 2;
+    pc = address;
+  }
+  else
+  {
+    pc += 3;
+  }
+}
+
+void Emulator8080::Op0xDE(uint8_t* code)
+{
+  uint16_t res = registers.a - code[1] - conditionCodes.cy;
+  ArithFlagsA(res);
+  registers.a = (res & 0xFF);
+  pc += 2;
+}
+
+void Emulator8080::Op0xDF()
+{
+  WriteMem(sp - 1, (pc & 0xFF00) >> 8);
+  WriteMem(sp - 2, pc & 0xFF);
+  sp -= 2;
+  pc = 0x18;
 }
 
 void Emulator8080::Op0xE1()
