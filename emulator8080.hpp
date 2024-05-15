@@ -188,6 +188,7 @@ class Emulator8080
     void Op0x8E();
     void Op0x8F();
     void Op0x90();
+    void Op0x91();
     void Op0x92();
     void Op0x93();
     void Op0x94();
