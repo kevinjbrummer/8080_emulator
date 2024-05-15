@@ -62,7 +62,6 @@ void Emulator8080::ArithFlagsA(uint16_t res)
   conditionCodes.s = (0x80 == (res & 0x80));
   conditionCodes.p = Parity((res & 0xFF), 8);
   conditionCodes.cy = (res > 0xFF);
-  registers.a = (res & 0xFF);
 }
 
 void Emulator8080::Cycle()
