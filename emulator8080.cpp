@@ -505,8 +505,8 @@ void Emulator8080::Op0x27()
 
   if ((registers.a & 0xF0) > 0x90)
   {
-    uint16_t res = (uint16_t) state->a + 0x60;
-    state->a = res & 0xFF;
+    uint16_t res = (uint16_t) registers.a + 0x60;
+    registers.a = res & 0xFF;
     ArithFlagsA(res);
   }
 }
