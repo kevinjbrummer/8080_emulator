@@ -81,7 +81,21 @@ void Emulator8080::Cycle()
     case 0x3A: Op0x3A(code); break;
     case 0x3D: Op0x3D(); break;
     case 0x3E: Op0x3E(code); break;
+    case 0x40: Op0x40(); break;
+    case 0x41: Op0x41(); break;
+    case 0x42: Op0x42(); break;
+    case 0x43: Op0x43(); break;
+    case 0x44: Op0x44(); break;
+    case 0x45: Op0x45(); break;
     case 0x46: Op0x46(); break;
+    case 0x47: Op0x47(); break;
+    case 0x48: Op0x48(); break;
+    case 0x49: Op0x49(); break;
+    case 0x4A: Op0x4A(); break;
+    case 0x4B: Op0x4B(); break;
+    case 0x4C: Op0x4C(); break;
+    case 0x4D: Op0x4D(); break;
+    case 0x4E: Op0x4E(); break;
     case 0x4F: Op0x4F(); break;
     case 0x56: Op0x56(); break;
     case 0x5E: Op0x5E(); break;
@@ -345,16 +359,101 @@ void Emulator8080::Op0x3E(uint8_t* code)
   pc += 2;
 }
 
+void Emulator8080::Op0x40()
+{
+  registers.b = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x41()
+{
+  registers.b = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x42()
+{
+  registers.b = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x43()
+{
+  registers.b = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x44()
+{
+  registers.b = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x45()
+{
+  registers.b = registers.l;
+  pc++;
+}
+
 void Emulator8080::Op0x46()
 {
-  registers.c = registers.a;
+  uint16_t address = (registers.h << 8) | registers.l;
+  registers.b = memory[address];
+  pc++;
+}
+
+void Emulator8080::Op0x47()
+{
+  registers.b = registers.a;
+  pc++;
+}
+
+void Emulator8080::Op0x48()
+{
+  registers.c = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x49()
+{
+  registers.c = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x4A()
+{
+  registers.c = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x4B()
+{
+  registers.c = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x4C()
+{
+  registers.c = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x4D()
+{
+  registers.c = registers.l;
+  pc++;
+}
+
+void Emulator8080::Op0x4E()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  registers.c = memory[address];
   pc++;
 }
 
 void Emulator8080::Op0x4F()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.b = memory[address];
+  registers.c = registers.a;
   pc++;
 }
 
