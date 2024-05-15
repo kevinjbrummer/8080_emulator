@@ -117,7 +117,7 @@ void Emulator8080::Cycle()
     case 0x2C: Op0x2C(); break;
     case 0x2D: Op0x2D(); break;
     case 0x2E: Op0x2E(code); break;
-    case 0x2F: Op0x2F(code); break;
+    case 0x2F: Op0x2F(); break;
     case 0x31: Op0x31(code); break;
     case 0x32: Op0x32(code); break;
     case 0x35: Op0x35(); break;
@@ -498,7 +498,7 @@ void Emulator8080::Op0x26(uint8_t* code)
 
 void Emulator8080::Op0x27()
 {
-  if ((registers & 0xF) > 9)
+  if ((registers.a & 0xF) > 9)
   {
     registers.a += 6;
   }
