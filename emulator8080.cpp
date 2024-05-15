@@ -1528,7 +1528,7 @@ void Emulator8080::Op0xBE()
 
 void Emulator8080::Op0xBF()
 {
-  uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a;
+  uint16_t res = (uint16_t)registers.a - (uint16_t)registers.a;
   ArithFlagsA(res);
   pc++;
 }
@@ -1650,7 +1650,7 @@ void Emulator8080::Op0xCC(uint8_t* code)
 {
   if (conditionCodes.z == 1)
   {
-    uint16_t address = (code[2]) << 8 | code[1];
+    uint16_t address = (code[2] << 8) | code[1];
     uint16_t retAddress = pc + 3;
     WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
     WriteMem(sp - 2, retAddress & 0xFF);
@@ -1675,7 +1675,7 @@ void Emulator8080::Op0xCD(uint8_t* code)
 
 void Emulator8080::Op0xCE(uint8_t* code)
 {
-  uint16_t res = registers.a + code[1] + conditionCodes.cy;
+  uint16_t res = (uint16_t)registers.a + (uint16_t)code[1] + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
   pc += 2;
@@ -1733,7 +1733,7 @@ void Emulator8080::Op0xD4(uint8_t* code)
 {
   if (conditionCodes.cy != 1)
   {
-    uint16_t address = (code[2]) << 8 | code[1];
+    uint16_t address = (code[2] << 8) | code[1];
     uint16_t retAddress = pc + 3;
     WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
     WriteMem(sp - 2, retAddress & 0xFF);
@@ -1756,7 +1756,7 @@ void Emulator8080::Op0xD5()
 
 void Emulator8080::Op0xD6(uint8_t* code)
 {
-  uint16_t res = registers.a - code[1];
+  uint16_t res = (uint16_t)registers.a - (uint16_t)code[1];
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
   pc += 2;
@@ -1774,8 +1774,8 @@ void Emulator8080::Op0xD8()
 {
   if (conditionCodes.cy == 1)
   {
-      pc = (memory[sp + 1] << 8) | memory[sp];
-  sp += 2;
+    pc = (memory[sp + 1] << 8) | memory[sp];
+    sp += 2;
   }
   else
   {
@@ -1820,7 +1820,7 @@ void Emulator8080::Op0xDC(uint8_t* code)
 
 void Emulator8080::Op0xDE(uint8_t* code)
 {
-  uint16_t res = registers.a - code[1] - conditionCodes.cy;
+  uint16_t res = (uint16_t)registers.a - (uint16_t)code[1] - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
   pc += 2;
@@ -1924,7 +1924,7 @@ void Emulator8080::Op0xF5()
 
 void Emulator8080::Op0xFE(uint8_t* code)
 {
-  uint8_t res = registers.a - code[1];
+  uint16_t res = (uint16_t)registers.a - (uint16_t)code[1];
   conditionCodes.z = (res == 0);
   conditionCodes.s = (0x80 == (res & 0x80));
   conditionCodes.p = Parity(res, 8);

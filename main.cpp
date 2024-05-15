@@ -17,6 +17,8 @@ int main(int argc, char* argv[])
   bool quit = false;
   auto lastInterrupt = std::chrono::high_resolution_clock::now();
   int interruptNum = 1;
+  auto lastDraw = std::chrono::high_resolution_clock::now();
+  
   while (!quit)
   {
     emulator8080.Cycle();
@@ -29,9 +31,12 @@ int main(int argc, char* argv[])
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastInterrupt).count();
 
+    auto currentDrawTime = std::chrono::high_resolution_clock::now();
+    float dtDraw = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastInterrupt).count();
+
     if (emulator8080.interuptEnabled)
     {
-      if(dt > 1.0/10.0){
+      if(dt > 1.0/60.0){
 
         emulator8080.GenerateInterupt(interruptNum);
         lastInterrupt = currentTime;
@@ -46,7 +51,12 @@ int main(int argc, char* argv[])
       }
     }
 
-    display.Update(emulator8080.display);
+    if (dtDraw > 16.0)
+    {
+      display.Update(emulator8080.display);
+      lastDraw = currentDrawTime;
+
+    }
   
   }
   return 0;
