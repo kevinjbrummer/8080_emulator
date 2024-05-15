@@ -163,8 +163,10 @@ void Emulator8080::Cycle()
     case 0xDA: Op0xDA(code); break;
     case 0xDB: Op0xDB(code); break;
     case 0xE1: Op0xE1(); break;
+    case 0xE3: Op0xE3(); break;
     case 0xE5: Op0xE5(); break;
     case 0xE6: Op0xE6(code); break;
+    case 0xE9: Op0xE9(); break;
     case 0xEB: Op0xEB(); break;
     case 0xF1: Op0xF1(); break;
     case 0xF5: Op0xF5(); break;
@@ -221,7 +223,7 @@ void Emulator8080::Op0x09()
   registers.h = (res & 0xFF00) >> 8;
   registers.l = res & 0xFF;
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
-  pc++; 
+  pc++;
 }
 
 
@@ -291,7 +293,7 @@ void Emulator8080::Op0x19()
   registers.h = (res & 0xFF00) >> 8;
   registers.l = res & 0xFF;
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
-  pc++; 
+  pc++;
 }
 
 void Emulator8080::Op0x1A()
@@ -330,7 +332,7 @@ void Emulator8080::Op0x29()
   registers.h = (res & 0xFF00) >> 8;
   registers.l = res & 0xFF;
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
-  pc++; 
+  pc++;
 }
 
 void Emulator8080::Op0x31(uint8_t* code)
@@ -872,7 +874,7 @@ void Emulator8080::Op0xC8()
 {
   if (conditionCodes.z == 1)
   {
-    pc = (memory[sp+ 1] << 8) | memory[sp]; 
+    pc = (memory[sp+ 1] << 8) | memory[sp];
     sp += 2;
   }
   else
@@ -970,6 +972,22 @@ void Emulator8080::Op0xE1()
   pc++;
 }
 
+void Emulator8080::Op0xE3()
+{
+  uint8_t temp;
+
+  temp = registers.l;
+  registers.l = memory[sp];
+  memory[sp] = temp;
+
+  temp = registers.h;
+  registers.h = memory[sp + 1];
+  memory[sp + 1] = temp;
+
+  sp += 2;
+  pc++;
+}
+
 void Emulator8080::Op0xE5()
 {
   sp -= 2;
@@ -987,6 +1005,11 @@ void Emulator8080::Op0xE6(uint8_t* code)
   conditionCodes.cy = conditionCodes.ac = 0;
   registers.a = res;
   pc += 2;
+}
+
+void Emulator8080::Op0xE9()
+{
+  pc = (registers.h << 8) | registers.l;
 }
 
 void Emulator8080::Op0xEB()
