@@ -254,6 +254,7 @@ void Emulator8080::Cycle()
     case 0xD2: Op0xD2(code); break;
     case 0xD3: Op0xD3(code); break;
     case 0xD5: Op0xD5(); break;
+    case 0xD8: Op0xD8(); break;
     case 0xDA: Op0xDA(code); break;
     case 0xDB: Op0xDB(code); break;
     case 0xE1: Op0xE1(); break;
@@ -1496,6 +1497,19 @@ void Emulator8080::Op0xD5()
   WriteMem(sp + 1, registers.d);
   WriteMem(sp, registers.e);
   pc++;
+}
+
+void Emulator8080::Op0xD8()
+{
+  if (conditionCodes.cy == 1)
+  {
+      pc = (memory[sp + 1] << 8) | memory[sp];
+  sp += 2;
+  }
+  else
+  {
+    pc++;
+  }
 }
 
 void Emulator8080::Op0xDA(uint8_t* code)
