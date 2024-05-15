@@ -52,7 +52,6 @@ class Emulator8080
     void Op0x05();
     void Op0x06(uint8_t* code);
     void Op0x07();
-    void Op0x08();
     void Op0x09();
     void Op0x0A();
     void Op0x0B();
@@ -60,7 +59,6 @@ class Emulator8080
     void Op0x0D();
     void Op0x0E(uint8_t* code);
     void Op0x0F();
-    void Op0x10();
     void Op0x11(uint8_t* code);
     void Op0x12();
     void Op0x13();
@@ -68,7 +66,6 @@ class Emulator8080
     void Op0x15();
     void Op0x16();
     void Op0x17();
-    void Op0x18();
     void Op0x19();
     void Op0x1A();
     void Op0x1B();
@@ -76,7 +73,6 @@ class Emulator8080
     void Op0x1D();
     void Op0x1E();
     void Op0x1F();
-    void Op0x20();
     void Op0x21(uint8_t* code);
     void Op0x22();
     void Op0x23();
@@ -84,7 +80,6 @@ class Emulator8080
     void Op0x25();
     void Op0x26(uint8_t* code);
     void Op0x27();
-    void Op0x28();
     void Op0x29();
     void Op0x2A();
     void Op0x2B();
@@ -92,7 +87,6 @@ class Emulator8080
     void Op0x2D();
     void Op0x2E();
     void Op0x2F();
-    void Op0x30();
     void Op0x31(uint8_t* code);
     void Op0x32(uint8_t* code);
     void Op0x33();
@@ -100,7 +94,6 @@ class Emulator8080
     void Op0x35();
     void Op0x36(uint8_t* code);
     void Op0x37();
-    void Op0x38();
     void Op0x39();
     void Op0x3A(uint8_t* code);
     void Op0x3B();
@@ -247,7 +240,6 @@ class Emulator8080
     void Op0xC8();
     void Op0xC9();
     void Op0xCA(uint8_t* code);
-    void Op0xCB();
     void Op0xCC();
     void Op0xCD(uint8_t* code);
     void Op0xCE();
@@ -261,11 +253,9 @@ class Emulator8080
     void Op0xD6();
     void Op0xD7();
     void Op0xD8();
-    void Op0xD9();
     void Op0xDA(uint8_t* code);
     void Op0xDB(uint8_t* code);
     void Op0xDC();
-    void Op0xDD();
     void Op0xDE();
     void Op0xDF();
     void Op0xE0();
@@ -281,7 +271,6 @@ class Emulator8080
     void Op0xEA();
     void Op0xEB();
     void Op0xEC();
-    void Op0xED();
     void Op0xEE();
     void Op0xEF();
     void Op0xF0();
@@ -297,7 +286,6 @@ class Emulator8080
     void Op0xFA();
     void Op0xFB();
     void Op0xFC();
-    void Op0xFD();
     void Op0xFE(uint8_t* code);
     void Op0xFF();
     void UnimplementedOp(uint8_t* code);
