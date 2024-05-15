@@ -40,6 +40,8 @@ class Emulator8080
     uint8_t* memory;
 
     int Parity(int x, int size);
+    void LogicFlagsA();
+    void ArithFlagsA(uint16_t res);
 
     void Op0x00();
     void Op0x01(uint8_t* code);
