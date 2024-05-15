@@ -19,8 +19,12 @@ int main(int argc, char* argv[])
   int interruptNum = 1;
   while (!quit)
   {
-    quit = display.ProcessInput();
     emulator8080.Cycle();
+
+    if (display.ProcessInput() || emulator8080.halt)
+    {
+      quit = true;
+    }
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastInterrupt).count();
@@ -42,7 +46,7 @@ int main(int argc, char* argv[])
       }
     }
 
-    display.Update(emulator8080.display);
+    // display.Update(emulator8080.display);
   
   }
   return 0;

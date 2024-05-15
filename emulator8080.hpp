@@ -37,7 +37,7 @@ class Emulator8080
     struct ConditionCodes conditionCodes;
     uint16_t sp;
     uint16_t pc;
-    uint8_t* memory{};
+    uint8_t* memory;
 
     int Parity(int x, int size);
 
@@ -242,7 +242,7 @@ class Emulator8080
     void Op0xC7();
     void Op0xC8();
     void Op0xC9();
-    void Op0xCA();
+    void Op0xCA(uint8_t* code);
     void Op0xCB();
     void Op0xCC();
     void Op0xCD(uint8_t* code);
@@ -250,7 +250,7 @@ class Emulator8080
     void Op0xCF();
     void Op0xD0();
     void Op0xD1();
-    void Op0xD2();
+    void Op0xD2(uint8_t* code);
     void Op0xD3(uint8_t* code);
     void Op0xD4();
     void Op0xD5();
@@ -258,8 +258,8 @@ class Emulator8080
     void Op0xD7();
     void Op0xD8();
     void Op0xD9();
-    void Op0xDA();
-    void Op0xDB();
+    void Op0xDA(uint8_t* code);
+    void Op0xDB(uint8_t* code);
     void Op0xDC();
     void Op0xDD();
     void Op0xDE();
