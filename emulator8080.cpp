@@ -129,12 +129,21 @@ void Emulator8080::Cycle()
     case 0x6D: Op0x6D(); break;
     case 0x6E: Op0x6E(); break;
     case 0x6F: Op0x6F(); break;
+    case 0x70: Op0x70(); break;
+    case 0x71: Op0x71(); break;
+    case 0x72: Op0x72(); break;
+    case 0x73: Op0x73(); break;
+    case 0x74: Op0x74(); break;
+    case 0x75: Op0x75(); break;
     case 0x77: Op0x77(); break;
+    case 0x78: Op0x78(); break;
     case 0x79: Op0x79(); break;
     case 0x7A: Op0x7A(); break;
     case 0x7B: Op0x7B(); break;
     case 0x7C: Op0x7C(); break;
+    case 0x7D: Op0x7D(); break;
     case 0x7E: Op0x7E(); break;
+    case 0x7F: Op0x7F(); break;
     case 0xA7: Op0xA7(); break;
     case 0xAF: Op0xAF(); break;
     case 0xB0: Op0xB0(); break;
@@ -679,10 +688,63 @@ void Emulator8080::Op0x6F()
   pc++;
 }
 
+void Emulator8080::Op0x70()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  memory[address] = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x71()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  memory[address] = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x72()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  memory[address] = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x73()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  memory[address] = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x74()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  memory[address] = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x75()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  memory[address] = registers.l;
+  pc++;
+}
+
+void Emulator8080::Op0x76()
+{
+  halt = true;
+}
+
 void Emulator8080::Op0x77()
 {
   uint16_t address = (registers.h << 8) | registers.l;
   memory[address] = registers.a;
+  pc++;
+}
+
+void Emulator8080::Op0x78()
+{
+  registers.a = registers.b;
   pc++;
 }
 
@@ -710,10 +772,22 @@ void Emulator8080::Op0x7C()
   pc++;
 }
 
+void Emulator8080::Op0x7D()
+{
+  registers.a = registers.l;
+  pc++;
+}
+
 void Emulator8080::Op0x7E()
 {
   uint16_t address = (registers.h << 8) | registers.l;
   registers.a = memory[address];
+  pc++;
+}
+
+void Emulator8080::Op0x7F()
+{
+  registers.a = registers.a;
   pc++;
 }
 
