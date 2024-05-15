@@ -113,8 +113,21 @@ void Emulator8080::Cycle()
     case 0x5D: Op0x5D(); break;
     case 0x5E: Op0x5E(); break;
     case 0x5F: Op0x5F(); break;
+    case 0x60: Op0x60(); break;
+    case 0x61: Op0x61(); break;
+    case 0x62: Op0x62(); break;
+    case 0x63: Op0x63(); break;
+    case 0x64: Op0x64(); break;
+    case 0x65: Op0x65(); break;
     case 0x66: Op0x66(); break;
     case 0x67: Op0x67(); break;
+    case 0x68: Op0x68(); break;
+    case 0x69: Op0x69(); break;
+    case 0x6A: Op0x6A(); break;
+    case 0x6B: Op0x6B(); break;
+    case 0x6C: Op0x6C(); break;
+    case 0x6D: Op0x6D(); break;
+    case 0x6E: Op0x6E(); break;
     case 0x6F: Op0x6F(); break;
     case 0x77: Op0x77(); break;
     case 0x79: Op0x79(); break;
@@ -568,6 +581,42 @@ void Emulator8080::Op0x5F()
   pc++;
 }
 
+void Emulator8080::Op0x60()
+{
+  registers.h = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x61()
+{
+  registers.h = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x62()
+{
+  registers.h = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x63()
+{
+  registers.h = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x64()
+{
+  registers.h = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x65()
+{
+  registers.h = registers.l;
+  pc++;
+}
+
 void Emulator8080::Op0x66()
 {
   uint16_t address = (registers.h << 8) | registers.l;
@@ -578,6 +627,49 @@ void Emulator8080::Op0x66()
 void Emulator8080::Op0x67()
 {
   registers.h = registers.a;
+  pc++;
+}
+
+void Emulator8080::Op0x68()
+{
+  registers.l = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x69()
+{
+  registers.l = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x6A()
+{
+  registers.l = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x6B()
+{
+  registers.l = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x6C()
+{
+  registers.l = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x6D()
+{
+  registers.l = registers.l;
+  pc++;
+}
+
+void Emulator8080::Op0x6E()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  registers.l = memory[address];
   pc++;
 }
 
