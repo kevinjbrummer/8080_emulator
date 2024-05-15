@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
     if (emulator8080.interuptEnabled)
     {
-      if(dt > 1.0/5.0){
+      if(dt > 1.0/10.0){
 
         emulator8080.GenerateInterupt(interruptNum);
         lastInterrupt = currentTime;
