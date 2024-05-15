@@ -64,6 +64,22 @@ void Emulator8080::ArithFlagsA(uint16_t res)
   conditionCodes.cy = (res > 0xFF);
 }
 
+void Emulator8080::WriteMem(uint16_t address, uint8_t value)
+{
+  if (address < 0x2000)
+  {
+    printf("Cant write to ROM %x\n", address);
+    return;
+  }
+  if (address >= 0x4000)
+  {
+    printf("Cant write out of RAM %x\n", address);
+    return;
+  }
+
+  memory[address] = value;
+}
+
 void Emulator8080::Cycle()
 {
   uint8_t* code = &memory[pc];
@@ -192,6 +208,7 @@ void Emulator8080::Cycle()
     case 0x9C: Op0x9C(); break;
     case 0x9D: Op0x9D(); break;
     case 0x9E: Op0x9E(); break;
+    case 0x9F: Op0x9F(); break;
     case 0xA0: Op0xA0(); break;
     case 0xA1: Op0xA1(); break;
     case 0xA2: Op0xA2(); break;
@@ -306,7 +323,7 @@ void Emulator8080::Op0x09()
 
 void Emulator8080::Op0x0A()
 {
-  uint8_t address = (registers.b << 8) | registers.c;
+  uint16_t address = (registers.b << 8) | registers.c;
   registers.a = memory[address];
   pc++;
 }
@@ -422,7 +439,7 @@ void Emulator8080::Op0x31(uint8_t* code)
 void Emulator8080::Op0x32(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
-  memory[address] = registers.a;
+  WriteMem(address, registers.a);
   pc += 3;
 }
 
@@ -433,14 +450,14 @@ void Emulator8080::Op0x35()
   conditionCodes.z = (res == 0);
   conditionCodes.s = (0x80 == (res & 0x80));
   conditionCodes.p = Parity(res, 8);
-  memory[address] = res;
+  WriteMem(address, res);
   pc++;
 }
 
 void Emulator8080::Op0x36(uint8_t* code)
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = code[1];
+  WriteMem(address, code[1]);
   pc += 2;
 }
 
@@ -770,42 +787,42 @@ void Emulator8080::Op0x6F()
 void Emulator8080::Op0x70()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.b;
+  WriteMem(address, registers.b);
   pc++;
 }
 
 void Emulator8080::Op0x71()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.c;
+  WriteMem(address, registers.c);
   pc++;
 }
 
 void Emulator8080::Op0x72()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.d;
+  WriteMem(address, registers.d);
   pc++;
 }
 
 void Emulator8080::Op0x73()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.e;
+  WriteMem(address, registers.e);
   pc++;
 }
 
 void Emulator8080::Op0x74()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.h;
+  WriteMem(address, registers.h);
   pc++;
 }
 
 void Emulator8080::Op0x75()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.l;
+  WriteMem(address, registers.l);
   pc++;
 }
 
@@ -817,7 +834,7 @@ void Emulator8080::Op0x76()
 void Emulator8080::Op0x77()
 {
   uint16_t address = (registers.h << 8) | registers.l;
-  memory[address] = registers.a;
+  WriteMem(address, registers.a);
   pc++;
 }
 
@@ -1389,8 +1406,8 @@ void Emulator8080::Op0xC3(uint8_t* code)
 void Emulator8080::Op0xC5()
 {
   sp -= 2;
-  memory[sp + 1] = registers.b;
-  memory[sp] = registers.c;
+  WriteMem(sp + 1, registers.b);
+  WriteMem(sp, registers.c);
   pc++;
 }
 
@@ -1440,8 +1457,8 @@ void Emulator8080::Op0xCD(uint8_t* code)
 {
   uint16_t address = (code[2]) << 8 | code[1];
   uint16_t retAddress = pc + 3;
-  memory[sp - 1] = (retAddress >> 8) & 0xFF;
-  memory[sp - 2] = retAddress & 0xFF;
+  WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+  WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
   pc = address;
 }
@@ -1476,8 +1493,8 @@ void Emulator8080::Op0xD3(uint8_t* code)
 void Emulator8080::Op0xD5()
 {
   sp -= 2;
-  memory[sp + 1] = registers.d;
-  memory[sp] = registers.e;
+  WriteMem(sp + 1, registers.d);
+  WriteMem(sp, registers.e);
   pc++;
 }
 
@@ -1513,11 +1530,11 @@ void Emulator8080::Op0xE3()
 
   temp = registers.l;
   registers.l = memory[sp];
-  memory[sp] = temp;
+  WriteMem(sp, temp);
 
   temp = registers.h;
   registers.h = memory[sp + 1];
-  memory[sp + 1] = temp;
+  WriteMem(sp + 1, temp);
 
   sp += 2;
   pc++;
@@ -1526,8 +1543,8 @@ void Emulator8080::Op0xE3()
 void Emulator8080::Op0xE5()
 {
   sp -= 2;
-  memory[sp + 1] = registers.h;
-  memory[sp] = registers.l;
+  WriteMem(sp + 1, registers.h);
+  WriteMem(sp, registers.l);
   pc++;
 }
 
@@ -1575,7 +1592,6 @@ void Emulator8080::Op0xF1()
 void Emulator8080::Op0xF5()
 {
   sp -= 2;
-  memory[sp + 1] = registers.a;
   uint8_t flags = (
     conditionCodes.ac << 4 |
     conditionCodes.cy << 3 |
@@ -1583,7 +1599,8 @@ void Emulator8080::Op0xF5()
     conditionCodes.s << 1 |
     conditionCodes.z
   );
-  memory[sp] = flags;
+  WriteMem(sp + 1, registers.a);
+  WriteMem(sp, flags);
   pc++;
 }
 
@@ -1612,8 +1629,8 @@ void Emulator8080::UnimplementedOp(uint8_t* code)
 
 void Emulator8080::GenerateInterupt(int interuptNum)
 {
-  memory[sp - 1] = (pc & 0xFF00) >> 8;
-  memory[sp - 2] = pc & 0xFF;
+  WriteMem(sp - 1, (pc & 0xFF00) >> 8);
+  WriteMem(sp - 2, pc & 0xFF);
   sp -= 2;
   pc = 8 * interuptNum;
 

@@ -27,11 +27,11 @@ int main(int argc, char* argv[])
     }
 
     auto currentTime = std::chrono::high_resolution_clock::now();
-    float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastInterrupt).count();
+    float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastInterrupt).count();
 
     if (emulator8080.interuptEnabled)
     {
-      if(dt > 1.0/30.0){
+      if(dt > 1.0/15.0){
 
         emulator8080.GenerateInterupt(interruptNum);
         lastInterrupt = currentTime;

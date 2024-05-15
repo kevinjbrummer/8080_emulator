@@ -42,6 +42,7 @@ class Emulator8080
     int Parity(int x, int size);
     void LogicFlagsA();
     void ArithFlagsA(uint16_t res);
+    void WriteMem(uint16_t address, uint8_t value);
 
     void Op0x00();
     void Op0x01(uint8_t* code);
