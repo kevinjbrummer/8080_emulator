@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
       }
     }
 
-    // display.Update(emulator8080.display);
+    display.Update(emulator8080.display);
   
   }
   return 0;

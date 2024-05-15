@@ -97,7 +97,20 @@ void Emulator8080::Cycle()
     case 0x4D: Op0x4D(); break;
     case 0x4E: Op0x4E(); break;
     case 0x4F: Op0x4F(); break;
+    case 0x50: Op0x50(); break;
+    case 0x51: Op0x51(); break;
+    case 0x52: Op0x52(); break;
+    case 0x53: Op0x53(); break;
+    case 0x54: Op0x54(); break;
+    case 0x55: Op0x55(); break;
     case 0x56: Op0x56(); break;
+    case 0x57: Op0x57(); break;
+    case 0x58: Op0x58(); break;
+    case 0x59: Op0x59(); break;
+    case 0x5A: Op0x5A(); break;
+    case 0x5B: Op0x5B(); break;
+    case 0x5C: Op0x5C(); break;
+    case 0x5D: Op0x5D(); break;
     case 0x5E: Op0x5E(); break;
     case 0x5F: Op0x5F(); break;
     case 0x66: Op0x66(); break;
@@ -457,10 +470,88 @@ void Emulator8080::Op0x4F()
   pc++;
 }
 
+void Emulator8080::Op0x50()
+{
+  registers.d = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x51()
+{
+  registers.d = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x52()
+{
+  registers.d = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x53()
+{
+  registers.d = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x54()
+{
+  registers.d = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x55()
+{
+  registers.d = registers.l;
+  pc++;
+}
+
 void Emulator8080::Op0x56()
 {
   uint16_t address = (registers.h << 8) | registers.l;
   registers.d = memory[address];
+  pc++;
+}
+
+void Emulator8080::Op0x57()
+{
+  registers.d = registers.a;
+  pc++;
+}
+
+void Emulator8080::Op0x58()
+{
+  registers.e = registers.b;
+  pc++;
+}
+
+void Emulator8080::Op0x59()
+{
+  registers.e = registers.c;
+  pc++;
+}
+
+void Emulator8080::Op0x5A()
+{
+  registers.e = registers.d;
+  pc++;
+}
+
+void Emulator8080::Op0x5B()
+{
+  registers.e = registers.e;
+  pc++;
+}
+
+void Emulator8080::Op0x5C()
+{
+  registers.e = registers.h;
+  pc++;
+}
+
+void Emulator8080::Op0x5D()
+{
+  registers.e = registers.l;
   pc++;
 }
 
