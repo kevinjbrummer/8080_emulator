@@ -192,8 +192,21 @@ void Emulator8080::Cycle()
     case 0x9C: Op0x9C(); break;
     case 0x9D: Op0x9D(); break;
     case 0x9E: Op0x9E(); break;
-    case 0x9F: Op0x9F(); break;
+    case 0xA0: Op0xA0(); break;
+    case 0xA1: Op0xA1(); break;
+    case 0xA2: Op0xA2(); break;
+    case 0xA3: Op0xA3(); break;
+    case 0xA4: Op0xA4(); break;
+    case 0xA5: Op0xA5(); break;
+    case 0xA6: Op0xA6(); break;
     case 0xA7: Op0xA7(); break;
+    case 0xA8: Op0xA8(); break;
+    case 0xA9: Op0xA9(); break;
+    case 0xAA: Op0xAA(); break;
+    case 0xAB: Op0xAB(); break;
+    case 0xAC: Op0xAC(); break;
+    case 0xAD: Op0xAD(); break;
+    case 0xAE: Op0xAE(); break;
     case 0xAF: Op0xAF(); break;
     case 0xB0: Op0xB0(); break;
     case 0xC1: Op0xC1(); break;
@@ -1102,25 +1115,119 @@ void Emulator8080::Op0x9F()
   pc++;
 }
 
+void Emulator8080::Op0xA0()
+{
+  registers.a = registers.a & registers.b;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA1()
+{
+  registers.a = registers.a & registers.c;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA2()
+{
+  registers.a = registers.a & registers.d;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA3()
+{
+  registers.a = registers.a & registers.e;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA4()
+{
+  registers.a = registers.a & registers.h;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA5()
+{
+  registers.a = registers.a & registers.l;
+  LogicFlagsA();
+  pc++;
+}
+
+
+void Emulator8080::Op0xA6()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  registers.a = registers.a & memory[address];
+  LogicFlagsA();
+  pc++;
+}
+
 void Emulator8080::Op0xA7()
 {
-  uint8_t res = registers.a & registers.a;
-  conditionCodes.z = (res == 0);
-  conditionCodes.s = (0x80 == (res & 0x80));
-  conditionCodes.p = Parity(res, 8);
-  conditionCodes.cy = conditionCodes.ac = 0;
-  registers.a = res;
+  registers.a = registers.a & registers.a;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA8()
+{
+  registers.a = registers.a ^ registers.b;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xA9()
+{
+  registers.a = registers.a ^ registers.c;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xAA()
+{
+  registers.a = registers.a ^ registers.d;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xAB()
+{
+  registers.a = registers.a ^ registers.e;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xAC()
+{
+  registers.a = registers.a ^ registers.h;
+  LogicFlagsA();
+  pc++;
+}
+
+void Emulator8080::Op0xAD()
+{
+  registers.a = registers.a ^ registers.l;
+  LogicFlagsA();
+  pc++;
+}
+
+
+void Emulator8080::Op0xAE()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  registers.a = registers.a ^ memory[address];
+  LogicFlagsA();
   pc++;
 }
 
 void Emulator8080::Op0xAF()
 {
-  uint8_t res = registers.a ^ registers.a;
-  conditionCodes.z = (res == 0);
-  conditionCodes.s = (0x80 == (res & 0x80));
-  conditionCodes.p = Parity(res, 8);
-  conditionCodes.cy = conditionCodes.ac = 0;
-  registers.a = res;
+  registers.a = registers.a ^ registers.a;
+  LogicFlagsA();
   pc++;
 }
 
