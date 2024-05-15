@@ -846,6 +846,7 @@ void Emulator8080::Op0x80()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.b;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -853,6 +854,7 @@ void Emulator8080::Op0x81()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.c;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -860,6 +862,7 @@ void Emulator8080::Op0x82()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.d;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -867,6 +870,7 @@ void Emulator8080::Op0x83()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.e;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -874,6 +878,7 @@ void Emulator8080::Op0x84()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.h;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -881,6 +886,7 @@ void Emulator8080::Op0x85()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.l;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -889,6 +895,7 @@ void Emulator8080::Op0x86()
   uint16_t address = (registers.h << 8) | registers.l;
   uint16_t res = (uint16_t)registers.a + (uint16_t) memory[address];
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -896,6 +903,7 @@ void Emulator8080::Op0x87()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.a;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -903,6 +911,7 @@ void Emulator8080::Op0x88()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.b + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -910,6 +919,7 @@ void Emulator8080::Op0x89()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.c + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -917,6 +927,7 @@ void Emulator8080::Op0x8A()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.d + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -924,6 +935,7 @@ void Emulator8080::Op0x8B()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.e + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -931,6 +943,7 @@ void Emulator8080::Op0x8C()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.h + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -938,6 +951,7 @@ void Emulator8080::Op0x8D()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.l + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -946,6 +960,7 @@ void Emulator8080::Op0x8E()
   uint16_t address = (registers.h << 8) | registers.l;
   uint16_t res = (uint16_t)registers.a + (uint16_t) memory[address] + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -953,6 +968,7 @@ void Emulator8080::Op0x8F()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.a + conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -960,6 +976,7 @@ void Emulator8080::Op0x90()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -967,6 +984,7 @@ void Emulator8080::Op0x91()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -974,6 +992,7 @@ void Emulator8080::Op0x92()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -981,6 +1000,7 @@ void Emulator8080::Op0x93()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -988,6 +1008,7 @@ void Emulator8080::Op0x94()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -995,6 +1016,7 @@ void Emulator8080::Op0x95()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1003,6 +1025,7 @@ void Emulator8080::Op0x96()
   uint16_t address = (registers.h << 8) | registers.l;
   uint16_t res = (uint16_t)registers.a - (uint16_t) memory[address];
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1010,6 +1033,7 @@ void Emulator8080::Op0x97()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1017,6 +1041,7 @@ void Emulator8080::Op0x98()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1024,6 +1049,7 @@ void Emulator8080::Op0x99()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1031,6 +1057,7 @@ void Emulator8080::Op0x9A()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1038,6 +1065,7 @@ void Emulator8080::Op0x9B()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1045,6 +1073,7 @@ void Emulator8080::Op0x9C()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1052,6 +1081,7 @@ void Emulator8080::Op0x9D()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1060,6 +1090,7 @@ void Emulator8080::Op0x9E()
   uint16_t address = (registers.h << 8) | registers.l;
   uint16_t res = (uint16_t)registers.a - (uint16_t) memory[address] - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
@@ -1067,6 +1098,7 @@ void Emulator8080::Op0x9F()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a - conditionCodes.cy;
   ArithFlagsA(res);
+  registers.a = (res & 0xFF);
   pc++;
 }
 
