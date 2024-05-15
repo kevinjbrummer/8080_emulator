@@ -24,11 +24,13 @@ class Emulator8080
 {
   public:
     bool halt;
-    bool interuptEnable;
+    bool interuptEnabled;
+    uint8_t* display{};
+
     Emulator8080();
     bool LoadRom(char* rom);
     void Cycle();
-    uint8_t* display{};
+    void GenerateInterupt(int interuptNum);
 
   private:
     struct Registers registers;

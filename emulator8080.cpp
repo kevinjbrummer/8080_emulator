@@ -8,7 +8,7 @@ Emulator8080::Emulator8080()
   display = &memory[0x2400];
   pc = 0;
   halt = false;
-  interuptEnable = false;
+  interuptEnabled = false;
 }
 
 bool Emulator8080::LoadRom(char* file)
@@ -51,6 +51,7 @@ int Emulator8080::Parity(int x, int size)
 void Emulator8080::Cycle()
 {
   uint8_t* code = &memory[pc];
+  // printf("%04x %02x\n", pc, code[0]);
   switch (code[0])
   {
     case 0x00: Op0x00(); break;
@@ -525,7 +526,7 @@ void Emulator8080::Op0xFE(uint8_t* code)
 
 void Emulator8080::Op0xFB()
 {
-  interuptEnable = true;
+  interuptEnabled = true;
   pc++;
 }
 
@@ -534,4 +535,14 @@ void Emulator8080::UnimplementedOp(uint8_t* code)
   printf("%04x %02x ", pc, code[0]);
   printf("Unimplemented Op. Stopping Program");
   halt = true;
+}
+
+void Emulator8080::GenerateInterupt(int interuptNum)
+{
+  memory[sp - 1] = (pc & 0xFF00) >> 8;
+  memory[sp - 2] = pc & 0xFF;
+  sp -= 2;
+  pc = 8 * interuptNum;
+
+  interuptEnabled = false;
 }
