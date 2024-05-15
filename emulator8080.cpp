@@ -258,13 +258,17 @@ void Emulator8080::Cycle()
     case 0xC1: Op0xC1(); break;
     case 0xC2: Op0xC2(code); break;
     case 0xC3: Op0xC3(code); break;
+    case 0xC4: Op0xC4(code); break;
     case 0xC5: Op0xC5(); break;
     case 0xC6: Op0xC6(code); break;
+    case 0xC7: Op0xC7(); break;
     case 0xC8: Op0xC8(); break;
     case 0xC9: Op0xC9(); break;
     case 0xCA: Op0xCA(code); break;
     case 0xCC: Op0xCC(code); break;
     case 0xCD: Op0xCD(code); break;
+    case 0xCE: Op0xCE(code); break;
+    case 0xCF: Op0xCF(); break;
     case 0xD0: Op0xD0(); break;
     case 0xD1: Op0xD1(); break;
     case 0xD2: Op0xD2(code); break;
@@ -1561,6 +1565,23 @@ void Emulator8080::Op0xC3(uint8_t* code)
   pc = (code[2]) << 8 | code[1];
 }
 
+void Emulator8080::Op0xC4(uint8_t* code)
+{
+  if (conditionCodes.z != 1)
+  {
+    uint16_t address = (code[2]) << 8 | code[1];
+    uint16_t retAddress = pc + 3;
+    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    WriteMem(sp - 2, retAddress & 0xFF);
+    sp -= 2;
+    pc = address;
+  }
+  else
+  {
+    pc += 3;
+  }
+}
+
 void Emulator8080::Op0xC5()
 {
   sp -= 2;
@@ -1578,6 +1599,14 @@ void Emulator8080::Op0xC6(uint8_t* code)
   conditionCodes.cy = (res > 0xFF);
   registers.a = (res & 0xFF);
   pc += 2;
+}
+
+void Emulator8080::Op0xC7()
+{
+  WriteMem(sp - 1, (pc & 0xFF00) >> 8);
+  WriteMem(sp - 2, pc & 0xFF);
+  sp -= 2;
+  pc = 0;
 }
 
 void Emulator8080::Op0xC8()
@@ -1636,6 +1665,22 @@ void Emulator8080::Op0xCD(uint8_t* code)
   WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
   pc = address;
+}
+
+void Emulator8080::Op0xCE(uint8_t* code)
+{
+  uint16_t res = registers.a + code[1] + conditionCodes.cy;
+  ArithFlagsA(res);
+  registers.a = (res & 0xFF);
+  pc += 2;
+}
+
+void Emulator8080::Op0xCF()
+{
+  WriteMem(sp - 1, (pc & 0xFF00) >> 8);
+  WriteMem(sp - 2, pc & 0xFF);
+  sp -= 2;
+  pc = 8;
 }
 
 void Emulator8080::Op0xD0()

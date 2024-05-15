@@ -233,7 +233,7 @@ class Emulator8080
     void Op0xC1();
     void Op0xC2(uint8_t* code);
     void Op0xC3(uint8_t* code);
-    void Op0xC4();
+    void Op0xC4(uint8_t* code);
     void Op0xC5();
     void Op0xC6(uint8_t* code);
     void Op0xC7();
@@ -242,7 +242,7 @@ class Emulator8080
     void Op0xCA(uint8_t* code);
     void Op0xCC(uint8_t* code);
     void Op0xCD(uint8_t* code);
-    void Op0xCE();
+    void Op0xCE(uint8_t* code);
     void Op0xCF();
     void Op0xD0();
     void Op0xD1();
