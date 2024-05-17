@@ -65,14 +65,14 @@ class Emulator8080
     void Op0x13();
     void Op0x14();
     void Op0x15();
-    void Op0x16();
+    void Op0x16(uint8_t* code);
     void Op0x17();
     void Op0x19();
     void Op0x1A();
     void Op0x1B();
     void Op0x1C();
     void Op0x1D();
-    void Op0x1E();
+    void Op0x1E(uint8_t* code);
     void Op0x1F();
     void Op0x21(uint8_t* code);
     void Op0x22(uint8_t* code);

@@ -109,9 +109,19 @@ void Emulator8080::Cycle()
     case 0x0E: Op0x0E(code); break;
     case 0x0F: Op0x0F(); break;
     case 0x11: Op0x11(code); break;
+    case 0x12: Op0x12(); break;
     case 0x13: Op0x13(); break;
+    case 0x14: Op0x14(); break;
+    case 0x15: Op0x15(); break;
+    case 0x16: Op0x16(code); break;
+    case 0x17: Op0x17(); break;
     case 0x19: Op0x19(); break;
     case 0x1A: Op0x1A(); break;
+    case 0x1B: Op0x1B(); break;
+    case 0x1C: Op0x1C(); break;
+    case 0x1D: Op0x1D(); break;
+    case 0x1E: Op0x1E(code); break;
+    case 0x1F: Op0x1F(); break;
     case 0x21: Op0x21(code); break;
     case 0x22: Op0x22(code); break;
     case 0x23: Op0x23(); break;
@@ -430,6 +440,13 @@ void Emulator8080::Op0x11(uint8_t* code)
   pc += 3;
 }
 
+void Emulator8080::Op0x12()
+{
+  uint16_t address = (registers.d << 8) | registers.e;
+  WriteMem(address, registers.a);
+  pc++;
+}
+
 void Emulator8080::Op0x13()
 {
   registers.e++;
@@ -439,6 +456,37 @@ void Emulator8080::Op0x13()
   }
   pc++;
 }
+
+void Emulator8080::Op0x14()
+{
+  uint8_t res = registers.d + 1;
+  FlagsZSP(res);
+  registers.d = res;
+  pc++;
+}
+
+void Emulator8080::Op0x15()
+{
+  uint8_t res = registers.d - 1;
+  FlagsZSP(res);
+  registers.d = res;
+  pc++;
+}
+
+void Emulator8080::Op0x16(uint8_t* code)
+{
+  registers.d = code[1];
+  pc += 2;
+}
+
+void Emulator8080::Op0x17()
+{
+  uint8_t res = registers.a;
+  registers.a = conditionCodes.cy | (res << 1);
+  conditionCodes.cy = (0x80 == (res & 0x80));
+  pc++;
+}
+
 
 void Emulator8080::Op0x19()
 {
@@ -455,6 +503,45 @@ void Emulator8080::Op0x1A()
 {
   uint16_t address = (registers.d << 8) | registers.e;
   registers.a = memory[address];
+  pc++;
+}
+
+void Emulator8080::Op0x1B()
+{
+  registers.e--;
+  if (registers.e == 0xFF){
+    registers.d--;
+  }
+  pc++;
+}
+
+void Emulator8080::Op0x1C()
+{
+  uint8_t res = registers.e + 1;
+  FlagsZSP(res);
+  registers.e = res;
+  pc++;
+}
+
+void Emulator8080::Op0x1D()
+{
+  uint8_t res = registers.e - 1;
+  FlagsZSP(res);
+  registers.e = res;
+  pc++;
+}
+
+void Emulator8080::Op0x1E(uint8_t* code)
+{
+  registers.e = code[1];
+  pc += 2;
+}
+
+void Emulator8080::Op0x1F()
+{
+  uint8_t res = registers.a;
+  registers.a = (res & 0x80) | (res >> 0x1);
+  conditionCodes.cy = (1 == (res & 0x1));
   pc++;
 }
 
