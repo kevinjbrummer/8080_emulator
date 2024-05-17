@@ -417,7 +417,7 @@ void Emulator8080::Op0x0E(uint8_t* code)
 
 void Emulator8080::Op0x0F()
 {
-  uint8_t res = registers.a >> 1;
+  uint8_t res = registers.a;
   registers.a = ((res & 0x1) << 7) | (res >> 0x1);
   conditionCodes.cy = (1 == (res & 0x1));
   pc++;
