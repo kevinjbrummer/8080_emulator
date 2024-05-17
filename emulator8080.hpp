@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <cstdio>
 
 struct Registers
 {
@@ -26,24 +27,29 @@ class Emulator8080
     bool halt;
     bool interuptEnabled;
     uint8_t* display{};
+    uint16_t pc;
+    uint8_t* memory;
+    FILE* logfile;
 
     Emulator8080();
-    bool LoadRom(char* rom);
-    void Cycle();
+    bool LoadRom();
+    uint8_t Cycle();
     void GenerateInterupt(int interuptNum);
 
   private:
     struct Registers registers;
     struct ConditionCodes conditionCodes;
     uint16_t sp;
-    uint16_t pc;
-    uint8_t* memory;
 
     int Parity(int x, int size);
     void LogicFlagsA();
     void ArithFlagsA(uint16_t res);
     void FlagsZSP(uint8_t value);
     void WriteMem(uint16_t address, uint8_t value);
+    void Push(uint8_t high, uint8_t low);
+    void Pop(uint8_t* high, uint8_t* low);
+    uint8_t ReadFromHL();
+    void WriteToHL(uint8_t value);
 
     void Op0x00();
     void Op0x01(uint8_t* code);
@@ -98,7 +104,7 @@ class Emulator8080
     void Op0x39();
     void Op0x3A(uint8_t* code);
     void Op0x3B();
-    void Op0x3C();
+    void Op0x3C(uint8_t* code);
     void Op0x3D();
     void Op0x3E(uint8_t* code);
     void Op0x3F();
@@ -284,9 +290,9 @@ class Emulator8080
     void Op0xF7();
     void Op0xF8();
     void Op0xF9();
-    void Op0xFA();
+    void Op0xFA(uint8_t* code);
     void Op0xFB();
-    void Op0xFC();
+    void Op0xFC(uint8_t* code);
     void Op0xFE(uint8_t* code);
     void Op0xFF();
     void UnimplementedOp(uint8_t* code);

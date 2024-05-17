@@ -1,6 +1,29 @@
 #include "emulator8080.hpp"
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstdio>
+
+unsigned char cycles8080[] = {
+	4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x00..0x0f
+	4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x10..0x1f
+	4, 10, 16, 5, 5, 5, 7, 4, 4, 10, 16, 5, 5, 5, 7, 4, //etc
+	4, 10, 13, 5, 10, 10, 10, 4, 4, 10, 13, 5, 5, 5, 7, 4,
+	
+	5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5, //0x40..0x4f
+	5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
+	5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
+	7, 7, 7, 7, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 7, 5,
+	
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4, //0x80..8x4f
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+	
+	11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11, //0xc0..0xcf
+	11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11, 
+	11, 10, 10, 18, 17, 11, 7, 11, 11, 5, 10, 5, 17, 17, 7, 11, 
+	11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11, 
+};
 
 Emulator8080::Emulator8080()
 {
@@ -9,12 +32,14 @@ Emulator8080::Emulator8080()
   pc = 0;
   halt = false;
   interuptEnabled = false;
+  logfile = fopen("opcodes.txt", "w");
 }
 
-bool Emulator8080::LoadRom(char* file)
+bool Emulator8080::LoadRom()
 {
   FILE* rom;
-  rom = fopen(file, "rb");
+  int size;
+  rom = fopen("invaders.rom", "rb");
   if (rom == NULL)
   {
     printf("Error opening rom file\n");
@@ -22,11 +47,12 @@ bool Emulator8080::LoadRom(char* file)
   }
 
   fseek(rom, 0, SEEK_END);
-  int size = ftell(rom);
+  size = ftell(rom);
   rewind(rom);
 
   fread(memory, 1, size, rom);
   fclose(rom);
+
 
   return true;
 }
@@ -37,13 +63,13 @@ int Emulator8080::Parity(int x, int size)
   int p = 0;
   x = (x & ((1 << size) - 1));
 
-  for (i; i < size; i++)
+  for (i=0; i < size; i++)
   {
     if (x & 0x1)
     {
       p++;
     }
-    x >>= 1;
+    x = x >> 1;
   }
   return (0 == (p & 0x1));
 }
@@ -71,6 +97,32 @@ void Emulator8080::FlagsZSP(uint8_t value)
   conditionCodes.p = Parity(value, 8);
 }
 
+void Emulator8080::Push(uint8_t high, uint8_t low)
+{
+  WriteMem(sp - 1, high);
+  WriteMem(sp - 2, low);
+  sp -= 2;
+}
+
+void Emulator8080::Pop(uint8_t* high, uint8_t* low)
+{
+  *high = memory[sp + 1];
+  *low = memory[sp];
+  sp += 2;
+}
+
+uint8_t Emulator8080::ReadFromHL()
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  return memory[address];
+}
+
+void Emulator8080::WriteToHL(uint8_t value)
+{
+  uint16_t address = (registers.h << 8) | registers.l;
+  WriteMem(address, value);
+}
+
 void Emulator8080::WriteMem(uint16_t address, uint8_t value)
 {
   if (address < 0x2000)
@@ -87,10 +139,11 @@ void Emulator8080::WriteMem(uint16_t address, uint8_t value)
   memory[address] = value;
 }
 
-void Emulator8080::Cycle()
+uint8_t Emulator8080::Cycle()
 {
   uint8_t* code = &memory[pc];
-  // printf("%04x %02x\n", pc, code[0]);
+  fprintf(logfile, "%04x %02x\n", pc, code[0]);
+  pc++;
   switch (code[0])
   {
     case 0x00: Op0x00(); break;
@@ -128,6 +181,7 @@ void Emulator8080::Cycle()
     case 0x24: Op0x24(); break;
     case 0x25: Op0x25(); break;
     case 0x26: Op0x26(code); break;
+    case 0x27: Op0x27(); break;
     case 0x29: Op0x29(); break;
     case 0x2A: Op0x2A(code); break;
     case 0x2B: Op0x2B(); break;
@@ -137,10 +191,12 @@ void Emulator8080::Cycle()
     case 0x2F: Op0x2F(); break;
     case 0x31: Op0x31(code); break;
     case 0x32: Op0x32(code); break;
+    case 0x34: Op0x34(); break;
     case 0x35: Op0x35(); break;
     case 0x36: Op0x36(code); break;
     case 0x37: Op0x37(); break;
     case 0x3A: Op0x3A(code); break;
+    case 0x3C: Op0x3C(code); break;
     case 0x3D: Op0x3D(); break;
     case 0x3E: Op0x3E(code); break;
     case 0x40: Op0x40(); break;
@@ -313,29 +369,32 @@ void Emulator8080::Cycle()
     case 0xF4: Op0xF4(code); break;
     case 0xF5: Op0xF5(); break;
     case 0xF6: Op0xF6(code); break;
+    case 0xFA: Op0xFA(code); break;
     case 0xFB: Op0xFB(); break;
+    case 0xFC: Op0xFC(code); break;
     case 0xFE: Op0xFE(code); break;
+    case 0xFF: Op0xFF(); break;
     default: UnimplementedOp(code); break;
   }
+
+  return cycles8080[code[0]];
 }
 
 void Emulator8080::Op0x00()
 {
-  pc++;
 }
 
 void Emulator8080::Op0x01(uint8_t* code)
 {
   registers.b = code[2];
   registers.c = code[1];
-  pc += 3;
+  pc += 2;
 }
 
 void Emulator8080::Op0x02()
 {
   uint16_t address = (registers.b << 8) | registers.c;
   WriteMem(address, registers.a);
-  pc++;
 }
 
 void Emulator8080::Op0x03()
@@ -345,30 +404,25 @@ void Emulator8080::Op0x03()
   {
     registers.b++;
   }
-  pc++;
 }
 
 void Emulator8080::Op0x04()
 {
-  uint8_t res = registers.b + 1;
-  FlagsZSP(res);
-  registers.b = res;
-  pc++;
+  registers.b += 1;
+  FlagsZSP(registers.b);
 }
 
 void Emulator8080::Op0x05()
 {
-  uint8_t res = registers.b - 1;
-  FlagsZSP(res);
-  registers.b = res;
-  pc++;
+  registers.b -= 1;
+  FlagsZSP(registers.b);
 }
 
 
 void Emulator8080::Op0x06(uint8_t* code)
 {
   registers.b = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x07()
@@ -376,7 +430,6 @@ void Emulator8080::Op0x07()
   uint8_t res = registers.a;
   registers.a = ((res & 0x80) >> 7) | (res << 1);
   conditionCodes.cy = (0x80 == (res & 0x80));
-  pc++;
 }
 
 void Emulator8080::Op0x09()
@@ -387,7 +440,6 @@ void Emulator8080::Op0x09()
   registers.h = (res & 0xFF00) >> 8;
   registers.l = res & 0xFF;
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
-  pc++;
 }
 
 
@@ -395,7 +447,6 @@ void Emulator8080::Op0x0A()
 {
   uint16_t address = (registers.b << 8) | registers.c;
   registers.a = memory[address];
-  pc++;
 }
 
 void Emulator8080::Op0x0B()
@@ -405,51 +456,44 @@ void Emulator8080::Op0x0B()
   {
     registers.b--;
   }
-  pc++;
 }
 
 void Emulator8080::Op0x0C()
 {
-  uint8_t res = registers.c + 1;
-  FlagsZSP(res);
-  registers.c = res;
-  pc++;
+  registers.c += 1;
+  FlagsZSP(registers.c);
 }
 
 void Emulator8080::Op0x0D()
 {
-  uint8_t res = registers.c - 1;
-  FlagsZSP(res);
-  registers.c = res;
-  pc++;
+  registers.c -= 1;
+  FlagsZSP(registers.c);
 }
 
 void Emulator8080::Op0x0E(uint8_t* code)
 {
   registers.c = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x0F()
 {
   uint8_t res = registers.a;
-  registers.a = ((res & 0x1) << 7) | (res >> 0x1);
-  conditionCodes.cy = (1 == (res & 0x1));
-  pc++;
+  registers.a = ((res & 1) << 7) | (res >> 1);
+  conditionCodes.cy = (1 == (res & 1));
 }
 
 void Emulator8080::Op0x11(uint8_t* code)
 {
   registers.d = code[2];
   registers.e = code[1];
-  pc += 3;
+  pc += 2;
 }
 
 void Emulator8080::Op0x12()
 {
   uint16_t address = (registers.d << 8) | registers.e;
   WriteMem(address, registers.a);
-  pc++;
 }
 
 void Emulator8080::Op0x13()
@@ -459,29 +503,24 @@ void Emulator8080::Op0x13()
   {
     registers.d++;
   }
-  pc++;
 }
 
 void Emulator8080::Op0x14()
 {
-  uint8_t res = registers.d + 1;
-  FlagsZSP(res);
-  registers.d = res;
-  pc++;
+  registers.d += 1;
+  FlagsZSP(registers.d);
 }
 
 void Emulator8080::Op0x15()
 {
-  uint8_t res = registers.d - 1;
-  FlagsZSP(res);
-  registers.d = res;
-  pc++;
+  registers.d -= 1;
+  FlagsZSP(registers.d);
 }
 
 void Emulator8080::Op0x16(uint8_t* code)
 {
   registers.d = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x17()
@@ -489,7 +528,6 @@ void Emulator8080::Op0x17()
   uint8_t res = registers.a;
   registers.a = conditionCodes.cy | (res << 1);
   conditionCodes.cy = (0x80 == (res & 0x80));
-  pc++;
 }
 
 
@@ -501,14 +539,12 @@ void Emulator8080::Op0x19()
   registers.h = (res & 0xFF00) >> 8;
   registers.l = res & 0xFF;
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
-  pc++;
 }
 
 void Emulator8080::Op0x1A()
 {
   uint16_t address = (registers.d << 8) | registers.e;
   registers.a = memory[address];
-  pc++;
 }
 
 void Emulator8080::Op0x1B()
@@ -517,44 +553,38 @@ void Emulator8080::Op0x1B()
   if (registers.e == 0xFF){
     registers.d--;
   }
-  pc++;
 }
 
 void Emulator8080::Op0x1C()
 {
-  uint8_t res = registers.e + 1;
-  FlagsZSP(res);
-  registers.e = res;
-  pc++;
+  registers.e += 1;
+  FlagsZSP(registers.e);
 }
 
 void Emulator8080::Op0x1D()
 {
-  uint8_t res = registers.e - 1;
-  FlagsZSP(res);
-  registers.e = res;
-  pc++;
+  registers.e -= 1;
+  FlagsZSP(registers.e);
 }
 
 void Emulator8080::Op0x1E(uint8_t* code)
 {
   registers.e = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x1F()
 {
   uint8_t res = registers.a;
-  registers.a = (res & 0x80) | (res >> 0x1);
-  conditionCodes.cy = (1 == (res & 0x1));
-  pc++;
+  registers.a = (conditionCodes.cy << 7) | (res >> 1);
+  conditionCodes.cy = (1 == (res & 1));
 }
 
 void Emulator8080::Op0x21(uint8_t* code)
 {
   registers.h = code[2];
   registers.l = code[1];
-  pc += 3;
+  pc += 2;
 }
 
 void Emulator8080::Op0x22(uint8_t* code)
@@ -562,7 +592,7 @@ void Emulator8080::Op0x22(uint8_t* code)
   uint16_t address = (code[2] << 8) | code[1];
   WriteMem(address + 1, registers.h);
   WriteMem(address, registers.l);
-  pc += 3;
+  pc += 2;
 }
 
 void Emulator8080::Op0x23()
@@ -571,29 +601,24 @@ void Emulator8080::Op0x23()
   if (registers.l == 0){
     registers.h++;
   }
-  pc++;
 }
 
 void Emulator8080::Op0x24()
 {
-  uint8_t res = registers.h + 1;
-  FlagsZSP(res);
-  registers.h = res;
-  pc++;
+  registers.h += 1;
+  FlagsZSP(registers.h);
 }
 
 void Emulator8080::Op0x25()
 {
-  uint8_t res = registers.h - 1;
-  FlagsZSP(res);
-  registers.h = res;
-  pc++;
+  registers.h -= 1;
+  FlagsZSP(registers.h);
 }
 
 void Emulator8080::Op0x26(uint8_t* code)
 {
   registers.h = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x27()
@@ -609,7 +634,6 @@ void Emulator8080::Op0x27()
     registers.a = res & 0xFF;
     ArithFlagsA(res);
   }
-  pc++;
 }
 
 void Emulator8080::Op0x29()
@@ -619,7 +643,6 @@ void Emulator8080::Op0x29()
   registers.h = (res & 0xFF00) >> 8;
   registers.l = res & 0xFF;
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
-  pc++;
 }
 
 void Emulator8080::Op0x2A(uint8_t* code)
@@ -627,7 +650,7 @@ void Emulator8080::Op0x2A(uint8_t* code)
   uint16_t address = (code[2] << 8) | code[1];
   registers.h = memory[address + 1];
   registers.l = memory[address];
-  pc += 3;
+  pc += 2;
 }
 
 void Emulator8080::Op0x2B()
@@ -637,428 +660,363 @@ void Emulator8080::Op0x2B()
   {
     registers.h--;
   }
-  pc++;
 }
 
 void Emulator8080::Op0x2C()
 {
-  uint8_t res = registers.l + 1;
-  FlagsZSP(res);
-  registers.l = res;
-  pc++;
+  registers.l += 1;
+  FlagsZSP(registers.l);
 }
 
 void Emulator8080::Op0x2D()
 {
-  uint8_t res = registers.l - 1;
-  FlagsZSP(res);
-  registers.l = res;
-  pc++;
+  registers.l -= 1;
+  FlagsZSP(registers.l);
 }
 
 void Emulator8080::Op0x2E(uint8_t* code)
 {
   registers.l = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x2F()
 {
   registers.a = ~registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x31(uint8_t* code)
 {
-  uint16_t value = (code[2] << 8) | code[1];
-  sp = value;
-  pc += 3;
+  sp = (code[2] << 8) | code[1];
+  pc += 2;
 }
 
 void Emulator8080::Op0x32(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
   WriteMem(address, registers.a);
-  pc += 3;
+  pc += 2;
+}
+
+void Emulator8080::Op0x34()
+{
+  uint8_t res = ReadFromHL() + 1;
+  FlagsZSP(res);
+  WriteToHL(res);
 }
 
 void Emulator8080::Op0x35()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  uint8_t res = memory[address] - 1;
+  uint8_t res = ReadFromHL() - 1;
   FlagsZSP(res);
-  WriteMem(address, res);
-  pc++;
+  WriteToHL(res);
 }
 
 void Emulator8080::Op0x36(uint8_t* code)
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, code[1]);
-  pc += 2;
+  WriteToHL(code[1]);
+  pc++;
 }
 
 void Emulator8080::Op0x37()
 {
   conditionCodes.cy = 1;
-  pc++;
 }
 
 void Emulator8080::Op0x3A(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
   registers.a = memory[address];
-  pc += 3;
+  pc += 2;
+}
+
+void Emulator8080::Op0x3C(uint8_t* code)
+{
+  uint16_t address = (code[2] << 8) | code[1];
+  WriteMem(address, registers.a);
+  pc += 2;
 }
 
 void Emulator8080::Op0x3D()
 {
-  uint8_t res = registers.a - 1;
-  FlagsZSP(res);
-  registers.a = res;
-  pc++;
+  registers.a -= 1;
+  FlagsZSP(registers.a);
 }
 
 void Emulator8080::Op0x3E(uint8_t* code)
 {
   registers.a = code[1];
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0x40()
 {
   registers.b = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x41()
 {
   registers.b = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x42()
 {
   registers.b = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x43()
 {
   registers.b = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x44()
 {
   registers.b = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x45()
 {
   registers.b = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x46()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.b = memory[address];
-  pc++;
+  registers.b = ReadFromHL();
 }
 
 void Emulator8080::Op0x47()
 {
   registers.b = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x48()
 {
   registers.c = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x49()
 {
   registers.c = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x4A()
 {
   registers.c = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x4B()
 {
   registers.c = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x4C()
 {
   registers.c = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x4D()
 {
   registers.c = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x4E()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.c = memory[address];
-  pc++;
+  registers.c = ReadFromHL();
 }
 
 void Emulator8080::Op0x4F()
 {
   registers.c = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x50()
 {
   registers.d = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x51()
 {
   registers.d = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x52()
 {
   registers.d = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x53()
 {
   registers.d = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x54()
 {
   registers.d = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x55()
 {
   registers.d = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x56()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.d = memory[address];
-  pc++;
+  registers.d = ReadFromHL();
 }
 
 void Emulator8080::Op0x57()
 {
   registers.d = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x58()
 {
   registers.e = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x59()
 {
   registers.e = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x5A()
 {
   registers.e = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x5B()
 {
   registers.e = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x5C()
 {
   registers.e = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x5D()
 {
   registers.e = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x5E()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.e = memory[address];
-  pc++;
+  registers.e = ReadFromHL();
 }
 
 void Emulator8080::Op0x5F()
 {
   registers.e = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x60()
 {
   registers.h = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x61()
 {
   registers.h = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x62()
 {
   registers.h = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x63()
 {
   registers.h = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x64()
 {
   registers.h = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x65()
 {
   registers.h = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x66()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.h = memory[address];
-  pc++;
+  registers.h = ReadFromHL();
 }
 
 void Emulator8080::Op0x67()
 {
   registers.h = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x68()
 {
   registers.l = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x69()
 {
   registers.l = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x6A()
 {
   registers.l = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x6B()
 {
   registers.l = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x6C()
 {
   registers.l = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x6D()
 {
   registers.l = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x6E()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.l = memory[address];
-  pc++;
+  registers.l = ReadFromHL();
 }
 
 void Emulator8080::Op0x6F()
 {
   registers.l = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x70()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.b);
-  pc++;
+  WriteToHL(registers.b);
 }
 
 void Emulator8080::Op0x71()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.c);
-  pc++;
+  WriteToHL(registers.c);
 }
 
 void Emulator8080::Op0x72()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.d);
-  pc++;
+  WriteToHL(registers.d);
 }
 
 void Emulator8080::Op0x73()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.e);
-  pc++;
+  WriteToHL(registers.e);
 }
 
 void Emulator8080::Op0x74()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.h);
-  pc++;
+  WriteToHL(registers.h);
 }
 
 void Emulator8080::Op0x75()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.l);
-  pc++;
+  WriteToHL(registers.l);
 }
 
 void Emulator8080::Op0x76()
@@ -1068,58 +1026,47 @@ void Emulator8080::Op0x76()
 
 void Emulator8080::Op0x77()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  WriteMem(address, registers.a);
-  pc++;
+  WriteToHL(registers.a);
 }
 
 void Emulator8080::Op0x78()
 {
   registers.a = registers.b;
-  pc++;
 }
 
 void Emulator8080::Op0x79()
 {
   registers.a = registers.c;
-  pc++;
 }
 
 void Emulator8080::Op0x7A()
 {
   registers.a = registers.d;
-  pc++;
 }
 
 void Emulator8080::Op0x7B()
 {
   registers.a = registers.e;
-  pc++;
 }
 
 void Emulator8080::Op0x7C()
 {
   registers.a = registers.h;
-  pc++;
 }
 
 void Emulator8080::Op0x7D()
 {
   registers.a = registers.l;
-  pc++;
 }
 
 void Emulator8080::Op0x7E()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.a = memory[address];
-  pc++;
+  registers.a = ReadFromHL();
 }
 
 void Emulator8080::Op0x7F()
 {
   registers.a = registers.a;
-  pc++;
 }
 
 void Emulator8080::Op0x80()
@@ -1127,7 +1074,6 @@ void Emulator8080::Op0x80()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.b;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x81()
@@ -1135,7 +1081,6 @@ void Emulator8080::Op0x81()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.c;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x82()
@@ -1143,7 +1088,6 @@ void Emulator8080::Op0x82()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.d;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x83()
@@ -1151,7 +1095,6 @@ void Emulator8080::Op0x83()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.e;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x84()
@@ -1159,7 +1102,6 @@ void Emulator8080::Op0x84()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.h;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x85()
@@ -1167,16 +1109,13 @@ void Emulator8080::Op0x85()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.l;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x86()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  uint16_t res = (uint16_t)registers.a + (uint16_t) memory[address];
+  uint16_t res = (uint16_t)registers.a + (uint16_t) ReadFromHL();
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x87()
@@ -1184,7 +1123,6 @@ void Emulator8080::Op0x87()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.a;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x88()
@@ -1192,7 +1130,6 @@ void Emulator8080::Op0x88()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.b + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x89()
@@ -1200,7 +1137,6 @@ void Emulator8080::Op0x89()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.c + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x8A()
@@ -1208,7 +1144,6 @@ void Emulator8080::Op0x8A()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.d + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x8B()
@@ -1216,7 +1151,6 @@ void Emulator8080::Op0x8B()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.e + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x8C()
@@ -1224,7 +1158,6 @@ void Emulator8080::Op0x8C()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.h + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x8D()
@@ -1232,16 +1165,13 @@ void Emulator8080::Op0x8D()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.l + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x8E()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  uint16_t res = (uint16_t)registers.a + (uint16_t) memory[address] + conditionCodes.cy;
+  uint16_t res = (uint16_t)registers.a + (uint16_t) ReadFromHL() + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x8F()
@@ -1249,7 +1179,6 @@ void Emulator8080::Op0x8F()
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.a + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x90()
@@ -1257,7 +1186,6 @@ void Emulator8080::Op0x90()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x91()
@@ -1265,7 +1193,6 @@ void Emulator8080::Op0x91()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x92()
@@ -1273,7 +1200,6 @@ void Emulator8080::Op0x92()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x93()
@@ -1281,7 +1207,6 @@ void Emulator8080::Op0x93()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x94()
@@ -1289,7 +1214,6 @@ void Emulator8080::Op0x94()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x95()
@@ -1297,16 +1221,13 @@ void Emulator8080::Op0x95()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x96()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  uint16_t res = (uint16_t)registers.a - (uint16_t) memory[address];
+  uint16_t res = (uint16_t)registers.a - (uint16_t) ReadFromHL();
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x97()
@@ -1314,7 +1235,6 @@ void Emulator8080::Op0x97()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x98()
@@ -1322,7 +1242,6 @@ void Emulator8080::Op0x98()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x99()
@@ -1330,7 +1249,6 @@ void Emulator8080::Op0x99()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x9A()
@@ -1338,7 +1256,6 @@ void Emulator8080::Op0x9A()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x9B()
@@ -1346,7 +1263,6 @@ void Emulator8080::Op0x9B()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x9C()
@@ -1354,7 +1270,6 @@ void Emulator8080::Op0x9C()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x9D()
@@ -1362,16 +1277,13 @@ void Emulator8080::Op0x9D()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x9E()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  uint16_t res = (uint16_t)registers.a - (uint16_t) memory[address] - conditionCodes.cy;
+  uint16_t res = (uint16_t)registers.a - (uint16_t) ReadFromHL() - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0x9F()
@@ -1379,259 +1291,215 @@ void Emulator8080::Op0x9F()
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
-  pc++;
 }
 
 void Emulator8080::Op0xA0()
 {
   registers.a = registers.a & registers.b;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA1()
 {
   registers.a = registers.a & registers.c;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA2()
 {
   registers.a = registers.a & registers.d;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA3()
 {
   registers.a = registers.a & registers.e;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA4()
 {
   registers.a = registers.a & registers.h;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA5()
 {
   registers.a = registers.a & registers.l;
   LogicFlagsA();
-  pc++;
 }
 
 
 void Emulator8080::Op0xA6()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.a = registers.a & memory[address];
+  registers.a = registers.a & ReadFromHL();
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA7()
 {
   registers.a = registers.a & registers.a;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA8()
 {
   registers.a = registers.a ^ registers.b;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xA9()
 {
   registers.a = registers.a ^ registers.c;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xAA()
 {
   registers.a = registers.a ^ registers.d;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xAB()
 {
   registers.a = registers.a ^ registers.e;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xAC()
 {
   registers.a = registers.a ^ registers.h;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xAD()
 {
   registers.a = registers.a ^ registers.l;
   LogicFlagsA();
-  pc++;
 }
 
 
 void Emulator8080::Op0xAE()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.a = registers.a ^ memory[address];
+  registers.a = registers.a ^ ReadFromHL();
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xAF()
 {
   registers.a = registers.a ^ registers.a;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB0()
 {
   registers.a = registers.a | registers.b;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB1()
 {
   registers.a = registers.a | registers.c;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB2()
 {
   registers.a = registers.a | registers.d;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB3()
 {
   registers.a = registers.a | registers.e;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB4()
 {
   registers.a = registers.a | registers.h;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB5()
 {
   registers.a = registers.a | registers.l;
   LogicFlagsA();
-  pc++;
 }
 
 
 void Emulator8080::Op0xB6()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  registers.a = registers.a | memory[address];
+  registers.a = registers.a | ReadFromHL();
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB7()
 {
   registers.a = registers.a | registers.a;
   LogicFlagsA();
-  pc++;
 }
 
 void Emulator8080::Op0xB8()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xB9()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xBA()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xBB()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xBC()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xBD()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xBE()
 {
-  uint16_t address = (registers.h << 8) | registers.l;
-  uint16_t res = (uint16_t)registers.a - (uint16_t) memory[address];
+  uint16_t res = (uint16_t)registers.a - (uint16_t) ReadFromHL();
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xBF()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t)registers.a;
   ArithFlagsA(res);
-  pc++;
 }
 
 void Emulator8080::Op0xC0()
 {
-  if (conditionCodes.z != 1)
+  if (conditionCodes.z == 0)
   {
     pc = (memory[sp + 1] << 8) | memory[sp];
     sp += 2;
-  }
-  else
-  {
-    pc++;
   }
 }
 
 void Emulator8080::Op0xC1()
 {
-  registers.b = memory[sp + 1];
-  registers.c = memory[sp];
-  sp += 2;
-  pc++;
+  Pop(&registers.b, &registers.c);
 }
 
 void Emulator8080::Op0xC2(uint8_t* code)
@@ -1642,66 +1510,60 @@ void Emulator8080::Op0xC2(uint8_t* code)
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xC3(uint8_t* code)
 {
-  pc = (code[2]) << 8 | code[1];
+  pc = (code[2] << 8) | code[1];
 }
 
 void Emulator8080::Op0xC4(uint8_t* code)
 {
-  if (conditionCodes.z != 1)
+  if (conditionCodes.z == 0)
   {
-    uint16_t address = (code[2]) << 8 | code[1];
-    uint16_t retAddress = pc + 3;
-    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
-    WriteMem(sp - 2, retAddress & 0xFF);
+    uint16_t retAddress = pc + 2;
+    WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+    WriteMem(sp - 2, (retAddress & 0xFF));
     sp -= 2;
-    pc = address;
+    pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xC5()
 {
-  sp -= 2;
-  WriteMem(sp + 1, registers.b);
-  WriteMem(sp, registers.c);
-  pc++;
+  Push(registers.b, registers.c);
 }
 
 void Emulator8080::Op0xC6(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t)code[1];
-  ArithFlagsA(res);
+  FlagsZSP(res & 0xFF);
+  conditionCodes.cy = (res > 0xFF);
   registers.a = (res & 0xFF);
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xC7()
 {
-  WriteMem(sp - 1, ((pc + 1) & 0xFF00) >> 8);
-  WriteMem(sp - 2, (pc + 1) & 0xFF);
+  uint16_t retAddress = pc + 2;
+  WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+  WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
-  pc = 0;
+  pc = 0x0000;
 }
 
 void Emulator8080::Op0xC8()
 {
-  if (conditionCodes.z == 1)
+  if (conditionCodes.z)
   {
     pc = (memory[sp+ 1] << 8) | memory[sp];
     sp += 2;
-  }
-  else
-  {
-    pc++;
   }
 }
 
@@ -1713,89 +1575,82 @@ void Emulator8080::Op0xC9()
 
 void Emulator8080::Op0xCA(uint8_t* code)
 {
-  if (conditionCodes.z == 1)
+  if (conditionCodes.z)
   {
     pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xCC(uint8_t* code)
 {
-  if (conditionCodes.z == 1)
+  if (conditionCodes.z)
   {
-    uint16_t address = (code[2] << 8) | code[1];
-    uint16_t retAddress = pc + 3;
-    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    uint16_t retAddress = pc + 2;
+    WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
     WriteMem(sp - 2, retAddress & 0xFF);
     sp -= 2;
-    pc = address;
+    pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xCD(uint8_t* code)
 {
-  uint16_t address = (code[2]) << 8 | code[1];
-  uint16_t retAddress = pc + 3;
-  WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+  uint16_t retAddress = pc + 2;
+  WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
   WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
-  pc = address;
+  pc = (code[2] << 8) | code[1];
 }
 
 void Emulator8080::Op0xCE(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t)code[1] + conditionCodes.cy;
-  ArithFlagsA(res);
+  FlagsZSP(res & 0xFF);
+  conditionCodes.cy = (res > 0xFF);
   registers.a = (res & 0xFF);
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xCF()
 {
-  WriteMem(sp - 1, ((pc + 1) & 0xFF00) >> 8);
-  WriteMem(sp - 2, (pc + 1) & 0xFF);
+  uint16_t retAddress = pc + 2;
+  WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+  WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
-  pc = 8;
+  pc = 0x0008;
 }
 
 void Emulator8080::Op0xD0()
 {
-  if (conditionCodes.cy != 1)
+  if (conditionCodes.cy == 0)
   {
     pc = (memory[sp + 1] << 8) | memory[sp];
     sp += 2;
-  }
-  else
-  {
-    pc++;
   }
 }
 
 void Emulator8080::Op0xD1()
 {
-  registers.d = memory[sp + 1];
-  registers.e = memory[sp];
-  sp += 2;
-  pc++;
+  Pop(&registers.d, &registers.e);
 }
 
 void Emulator8080::Op0xD2(uint8_t* code)
 {
-  if (conditionCodes.cy != 1)
+  if (conditionCodes.cy == 0)
   {
     pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
@@ -1803,151 +1658,135 @@ void Emulator8080::Op0xD2(uint8_t* code)
 void Emulator8080::Op0xD3(uint8_t* code)
 {
   //TODO: Implement OUT
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xD4(uint8_t* code)
 {
-  if (conditionCodes.cy != 1)
+  if (conditionCodes.cy == 0)
   {
-    uint16_t address = (code[2] << 8) | code[1];
-    uint16_t retAddress = pc + 3;
-    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    uint16_t retAddress = pc + 2;
+    WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
     WriteMem(sp - 2, retAddress & 0xFF);
     sp -= 2;
-    pc = address;
+    pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xD5()
 {
-  sp -= 2;
-  WriteMem(sp + 1, registers.d);
-  WriteMem(sp, registers.e);
-  pc++;
+  Push(registers.d, registers.e);
 }
 
 void Emulator8080::Op0xD6(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t)code[1];
-  ArithFlagsA(res);
+  FlagsZSP(res & 0xFF);
+  conditionCodes.cy = (registers.a < code[1]);
   registers.a = (res & 0xFF);
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xD7()
 {
-  WriteMem(sp - 1, ((pc + 1) & 0xFF00) >> 8);
-  WriteMem(sp - 2, (pc + 1) & 0xFF);
+  uint16_t retAddress = pc + 2;
+  WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+  WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
-  pc = 0x10;
+  pc = 0x0010;
 }
 
 void Emulator8080::Op0xD8()
 {
-  if (conditionCodes.cy == 1)
+  if (conditionCodes.cy)
   {
     pc = (memory[sp + 1] << 8) | memory[sp];
     sp += 2;
-  }
-  else
-  {
-    pc++;
   }
 }
 
 void Emulator8080::Op0xDA(uint8_t* code)
 {
-  if (conditionCodes.cy == 1)
+  if (conditionCodes.cy)
   {
     pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xDB(uint8_t* code)
 {
   //TODO: Implement IN
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xDC(uint8_t* code)
 {
-  if (conditionCodes.cy == 1)
+  if (conditionCodes.cy)
   {
-    uint16_t address = (code[2]) << 8 | code[1];
-    uint16_t retAddress = pc + 3;
-    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    uint16_t retAddress = pc + 2;
+    WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
     WriteMem(sp - 2, retAddress & 0xFF);
     sp -= 2;
-    pc = address;
+    pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xDE(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t)code[1] - conditionCodes.cy;
-  ArithFlagsA(res);
+  FlagsZSP(res & 0xFF);
+  conditionCodes.cy = (res > 0xFF);
   registers.a = (res & 0xFF);
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xDF()
 {
-  WriteMem(sp - 1, ((pc + 1) & 0xFF00) >> 8);
-  WriteMem(sp - 2, (pc + 1) & 0xFF);
+  uint16_t retAddress = pc + 2;
+  WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+  WriteMem(sp - 2, retAddress & 0xFF);
   sp -= 2;
-  pc = 0x18;
+  pc = 0x0018;
 }
 
 void Emulator8080::Op0xE1()
 {
-  registers.h = memory[sp + 1];
-  registers.l = memory[sp];
-  sp += 2;
-  pc++;
+  Pop(&registers.h, &registers.l);
 }
 
 void Emulator8080::Op0xE3()
 {
-  uint8_t temp;
 
-  temp = registers.l;
-  registers.l = memory[sp];
-  WriteMem(sp, temp);
-
-  temp = registers.h;
+  uint8_t high = registers.h;
+  uint8_t low = registers.l;
   registers.h = memory[sp + 1];
-  WriteMem(sp + 1, temp);
-
-  sp += 2;
-  pc++;
+  registers.l = memory[sp];
+  WriteMem(sp + 1, high);
+  WriteMem(sp, low);
 }
 
 void Emulator8080::Op0xE5()
 {
-  WriteMem(sp - 1, registers.h);
-  WriteMem(sp - 2, registers.l);
-  sp -= 2;
-  pc++;
+  Push(registers.h, registers.l);
 }
 
 void Emulator8080::Op0xE6(uint8_t* code)
 {
   registers.a =  registers.a & code[1];
   LogicFlagsA();
-  pc += 2;
+  pc++;
 }
 
 void Emulator8080::Op0xE9()
@@ -1957,14 +1796,13 @@ void Emulator8080::Op0xE9()
 
 void Emulator8080::Op0xEB()
 {
-  uint8_t temp = registers.h;
-  registers.h = registers.d;
-  registers.d = temp;
 
-  temp = registers.l;
-  registers.l = registers.e;
-  registers.e = temp;
-  pc++;
+  uint8_t save1 = registers.d;
+  uint8_t save2 = registers.e;
+  registers.d = registers.h;
+  registers.e = registers.l;
+  registers.h = save1;
+  registers.l = save2;
 }
 
 void Emulator8080::Op0xF0()
@@ -1974,10 +1812,6 @@ void Emulator8080::Op0xF0()
     pc = (memory[sp + 1] << 8 ) | memory[sp];
     sp += 2;
   }
-  else
-  {
-    pc++;
-  }
 }
 
 void Emulator8080::Op0xF1()
@@ -1985,17 +1819,16 @@ void Emulator8080::Op0xF1()
   registers.a = memory[sp + 1];
   uint8_t psw = memory[sp];
   conditionCodes.ac = (0x10 == (psw & 0x10));
-  conditionCodes.cy = (0x8 == (psw & 0x8));
-  conditionCodes.p = (0x4 == (psw & 0x4));
-  conditionCodes.s = (0x2 == (psw & 0x2));
-  conditionCodes.z = (0x1 == (psw & 0x1));
+  conditionCodes.cy = (0x08 == (psw & 0x08));
+  conditionCodes.p = (0x04 == (psw & 0x04));
+  conditionCodes.s = (0x02 == (psw & 0x02));
+  conditionCodes.z = (0x01 == (psw & 0x01));
   sp += 2;
-  pc++;
 }
 
 void Emulator8080::Op0xF2(uint8_t* code)
 {
-  if (conditionCodes.p == 0)
+  if (conditionCodes.s == 0)
   {
     pc = (code[2] << 8 ) | code[1];
   }
@@ -2008,66 +1841,100 @@ void Emulator8080::Op0xF2(uint8_t* code)
 void Emulator8080::Op0xF3()
 {
   interuptEnabled = false;
-  pc++;
 }
 
 void Emulator8080::Op0xF4(uint8_t* code)
 {
   if (conditionCodes.s == 0)
   {
-    uint16_t address = (code[2]) << 8 | code[1];
-    uint16_t retAddress = pc + 3;
-    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    uint16_t retAddress = pc + 2;
+    WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
     WriteMem(sp - 2, retAddress & 0xFF);
     sp -= 2;
-    pc = address;
+    pc = (code[2] << 8) | code[1];
   }
   else
   {
-    pc += 3;
+    pc += 2;
   }
 }
 
 void Emulator8080::Op0xF5()
 {
-  sp -= 2;
-  uint8_t flags = (
+  uint8_t psw = (
     conditionCodes.ac << 4 |
     conditionCodes.cy << 3 |
     conditionCodes.p << 2 |
     conditionCodes.s << 1 |
     conditionCodes.z
   );
-  WriteMem(sp + 1, registers.a);
-  WriteMem(sp, flags);
-  pc++;
+  WriteMem(sp - 1, registers.a);
+  WriteMem(sp - 2, psw);
+  sp -= 2;
 }
 
 void Emulator8080::Op0xF6(uint8_t* code)
 {
-  registers.a = registers.a | code[1];
-  LogicFlagsA();
-  pc += 2;
+  uint8_t res = registers.a | code[1];
+  FlagsZSP(res);
+  conditionCodes.cy = 0;
+  registers.a = res;
+  pc++;
+}
+
+void Emulator8080::Op0xFA(uint8_t* code)
+{
+  if (conditionCodes.s)
+  {
+    pc = (code[2] << 8) | code[1];
+  }
+  else
+  {
+    pc += 2;
+  }
 }
 
 void Emulator8080::Op0xFB()
 {
   interuptEnabled = true;
-  pc++;
+}
+
+void Emulator8080::Op0xFC(uint8_t* code)
+{
+  if (conditionCodes.s)
+  {
+    uint16_t retAddress = pc + 2;
+    WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+    WriteMem(sp - 2, retAddress & 0xFF);
+    sp -= 2;
+    pc = (code[2] << 8) | code[1];
+  }
+  else
+  {
+    pc += 2;
+  }
 }
 
 void Emulator8080::Op0xFE(uint8_t* code)
 {
-  uint16_t res = (uint16_t)registers.a - (uint16_t)code[1];
-  conditionCodes.z = (res == 0);
-  conditionCodes.s = (0x80 == (res & 0x80));
-  conditionCodes.p = Parity(res, 8);
+  uint8_t res = registers.a - code[1];
+  FlagsZSP(res);
   conditionCodes.cy = registers.a < code[1];
-  pc += 2;
+  pc++;
+}
+
+void Emulator8080::Op0xFF()
+{
+  uint16_t retAddress = pc + 2;
+  WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
+  WriteMem(sp - 2, retAddress & 0xFF);
+  sp -= 2;
+  pc = 0x0038;
 }
 
 void Emulator8080::UnimplementedOp(uint8_t* code)
 {
+  pc--;
   printf("%04x %02x ", pc, code[0]);
   printf("Unimplemented Op. Stopping Program\n");
   halt = true;
@@ -2075,9 +1942,7 @@ void Emulator8080::UnimplementedOp(uint8_t* code)
 
 void Emulator8080::GenerateInterupt(int interuptNum)
 {
-  WriteMem(sp - 1, (pc & 0xFF00) >> 8);
-  WriteMem(sp - 2, pc & 0xFF);
-  sp -= 2;
+  Push((pc & 0xFF00) >> 8, pc & 0xFF);
   pc = 8 * interuptNum;
 
   interuptEnabled = false;
