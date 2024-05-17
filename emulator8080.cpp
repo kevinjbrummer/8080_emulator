@@ -306,8 +306,13 @@ void Emulator8080::Cycle()
     case 0xE6: Op0xE6(code); break;
     case 0xE9: Op0xE9(); break;
     case 0xEB: Op0xEB(); break;
+    case 0xF0: Op0xF0(); break;
     case 0xF1: Op0xF1(); break;
+    case 0xF2: Op0xF2(code); break;
+    case 0xF3: Op0xF3(); break;
+    case 0xF4: Op0xF4(code); break;
     case 0xF5: Op0xF5(); break;
+    case 0xF6: Op0xF6(code); break;
     case 0xFB: Op0xFB(); break;
     case 0xFE: Op0xFE(code); break;
     default: UnimplementedOp(code); break;
@@ -1962,6 +1967,19 @@ void Emulator8080::Op0xEB()
   pc++;
 }
 
+void Emulator8080::Op0xF0()
+{
+  if (conditionCodes.s == 0)
+  {
+    pc = (memory[sp + 1] << 8 ) | memory[sp];
+    sp += 2;
+  }
+  else
+  {
+    pc++;
+  }
+}
+
 void Emulator8080::Op0xF1()
 {
   registers.a = memory[sp + 1];
@@ -1973,6 +1991,41 @@ void Emulator8080::Op0xF1()
   conditionCodes.z = (0x1 == (psw & 0x1));
   sp += 2;
   pc++;
+}
+
+void Emulator8080::Op0xF2(uint8_t* code)
+{
+  if (conditionCodes.p == 0)
+  {
+    pc = (code[2] << 8 ) | code[1];
+  }
+  else
+  {
+    pc += 2;
+  }
+}
+
+void Emulator8080::Op0xF3()
+{
+  interuptEnabled = false;
+  pc++;
+}
+
+void Emulator8080::Op0xF4(uint8_t* code)
+{
+  if (conditionCodes.s == 0)
+  {
+    uint16_t address = (code[2]) << 8 | code[1];
+    uint16_t retAddress = pc + 3;
+    WriteMem(sp - 1, (retAddress & 0xFF00) >> 8);
+    WriteMem(sp - 2, retAddress & 0xFF);
+    sp -= 2;
+    pc = address;
+  }
+  else
+  {
+    pc += 3;
+  }
 }
 
 void Emulator8080::Op0xF5()
@@ -1988,6 +2041,13 @@ void Emulator8080::Op0xF5()
   WriteMem(sp + 1, registers.a);
   WriteMem(sp, flags);
   pc++;
+}
+
+void Emulator8080::Op0xF6(uint8_t* code)
+{
+  registers.a = registers.a | code[1];
+  LogicFlagsA();
+  pc += 2;
 }
 
 void Emulator8080::Op0xFB()

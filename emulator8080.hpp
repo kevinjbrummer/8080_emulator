@@ -276,11 +276,11 @@ class Emulator8080
     void Op0xEF();
     void Op0xF0();
     void Op0xF1();
-    void Op0xF2();
+    void Op0xF2(uint8_t* code);
     void Op0xF3();
-    void Op0xF4();
+    void Op0xF4(uint8_t* code);
     void Op0xF5();
-    void Op0xF6();
+    void Op0xF6(uint8_t* code);
     void Op0xF7();
     void Op0xF8();
     void Op0xF9();
