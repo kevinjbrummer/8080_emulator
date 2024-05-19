@@ -30,14 +30,14 @@ class Emulator8080
     uint16_t pc;
     uint8_t* memory;
     FILE* logfile;
-
+    uint16_t prevSP;
     Emulator8080();
     bool LoadRom();
     uint8_t Cycle();
     void GenerateInterupt(int interuptNum);
+    struct Registers registers;
 
   private:
-    struct Registers registers;
     struct ConditionCodes conditionCodes;
     uint16_t sp;
 
@@ -267,18 +267,18 @@ class Emulator8080
     void Op0xDF();
     void Op0xE0();
     void Op0xE1();
-    void Op0xE2();
+    void Op0xE2(uint8_t* code);
     void Op0xE3();
-    void Op0xE4();
+    void Op0xE4(uint8_t* code);
     void Op0xE5();
     void Op0xE6(uint8_t* code);
     void Op0xE7();
     void Op0xE8();
     void Op0xE9();
-    void Op0xEA();
+    void Op0xEA(uint8_t* code);
     void Op0xEB();
-    void Op0xEC();
-    void Op0xEE();
+    void Op0xEC(uint8_t* code);
+    void Op0xEE(uint8_t* code);
     void Op0xEF();
     void Op0xF0();
     void Op0xF1();

@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
   bool quit = false;
   auto lastInterrupt = std::chrono::high_resolution_clock::now();
-  int interruptNum = 2;
+  int interruptNum = 1;
   auto lastDraw = std::chrono::high_resolution_clock::now();
   auto lastTimer = std::chrono::high_resolution_clock::now();
   while (!quit)
@@ -31,15 +31,13 @@ int main(int argc, char* argv[])
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastInterrupt).count();
 
-    auto currentDrawTime = std::chrono::high_resolution_clock::now();
-    float dtDraw = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastInterrupt).count();
+    float dtDraw = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastDraw).count();
 
+      if(dt >= 1.0/60.0){
     if (emulator8080.interuptEnabled)
     {
-      if(dt > 1.0/60.0){
 
         emulator8080.GenerateInterupt(interruptNum);
-        lastInterrupt = currentTime;
         if (interruptNum == 1)
         {
           interruptNum = 2;
@@ -48,28 +46,26 @@ int main(int argc, char* argv[])
         {
           interruptNum = 1;
         }
+        lastInterrupt = currentTime;
       }
     }
 
-    float dc = std::chrono::duration<float, std::chrono::microseconds::period>(currentTime - lastTimer).count();
-    int cyclesToCatchUp = 2 * dc;
-    int cycles = 0;
-    while (cyclesToCatchUp > cycles)
-    {
-      unsigned char *op;
-      op = &emulator8080.memory[emulator8080.pc];
-      cycles += emulator8080.Cycle();
-    }
+    // float dc = std::chrono::duration<float, std::chrono::microseconds::period>(currentTime - lastTimer).count();
+    // int cyclesToCatchUp = 2 * dc;
+    // int cycles = 0;
+    // while (cyclesToCatchUp > cycles)
+    // {
+        emulator8080.Cycle();
+    // }
 
     if (dtDraw > 16.0)
     {
       display.Update(emulator8080.display);
-      lastDraw = currentDrawTime;
+      lastDraw = currentTime;
 
     }
-    lastTimer = lastTimer = std::chrono::high_resolution_clock::now();
+    lastTimer = currentTime;
   
   }
-  fclose(emulator8080.logfile);
   return 0;
 }
