@@ -55,7 +55,7 @@ void Display::Update(uint8_t* buffer)
   SDL_RenderPresent(renderer);
 }
 
-bool Display::ProcessInput()
+bool Display::ProcessInput(uint8_t* port)
 {
   bool quit = false;
   SDL_Event e;
@@ -74,6 +74,24 @@ bool Display::ProcessInput()
           switch (e.key.keysym.sym)
           {
             case SDLK_ESCAPE: quit = true; break;
+            case SDLK_RETURN: *port |= 0x1; break;
+            case SDLK_1: *port |= 0x4; break;
+            case SDLK_SPACE: *port |= 0x10; break;
+            case SDLK_LEFT: *port |= 0x20; break;
+            case SDLK_RIGHT: *port |= 0x40; break;
+            default: break;
+          }
+        }
+        break;
+      case SDL_KEYUP:
+        {
+          switch (e.key.keysym.sym)
+          {
+            case SDLK_RETURN: *port &= ~0x1; break;
+            case SDLK_1: *port &= ~0x4; break;
+            case SDLK_SPACE: *port &= ~0x10; break;
+            case SDLK_LEFT: *port &= ~0x20; break;
+            case SDLK_RIGHT: *port &= ~0x40; break;
             default: break;
           }
         }

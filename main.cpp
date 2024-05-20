@@ -20,13 +20,14 @@ int main(int argc, char* argv[])
   int interruptNum = 1;
   auto lastDraw = std::chrono::high_resolution_clock::now();
   auto lastTimer = std::chrono::high_resolution_clock::now();
+  uint8_t Port1Input = 0;
+  uint8_t shift0 = 0;
+  uint8_t shift1 = 0;
+  uint8_t shiftOffset = 0;
   while (!quit)
   {
 
-    if (display.ProcessInput() || emulator8080.halt)
-    {
-      quit = true;
-    }
+    quit = display.ProcessInput(&Port1Input);
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastInterrupt).count();
@@ -55,7 +56,54 @@ int main(int argc, char* argv[])
     int cycles = 0;
     while (cyclesToCatchUp > cycles)
     {
-      cycles += emulator8080.Cycle();
+      uint8_t* op = &emulator8080.memory[emulator8080.pc];
+      switch (op[0])
+      {
+      case 0xDB:
+        {
+          switch (op[1])
+          {
+          case 0:
+            emulator8080.registers.a = 1;
+            break;
+          case 1:
+            emulator8080.registers.a = Port1Input;
+            break;
+          case 3:
+            {
+              uint16_t value = (shift1 << 8) | shift0;
+              emulator8080.registers.a = ((value >> (8 - shiftOffset)) & 0xFF);
+            }
+            break;
+          default:
+            break;
+          }
+        }
+        emulator8080.pc += 2;
+        cycles += 3;
+        break;
+      case 0xD3:
+        {
+          switch (op[1])
+          {
+          case 2:
+            shiftOffset = emulator8080.registers.a & 0x7;
+            break;
+          case 4:
+            shift0 = shift1;
+            shift1 = emulator8080.registers.a;
+            break;
+          default:
+            break;
+          }
+        }
+        emulator8080.pc += 2;
+        cycles += 3;
+        break;
+      default:
+        cycles += emulator8080.Cycle();
+        break;
+      }
     }
 
     if (dtDraw > 16.0)
