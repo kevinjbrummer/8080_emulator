@@ -49,7 +49,6 @@ class Emulator8080
     uint8_t ReadFromHL();
     void WriteToHL(uint8_t value);
 
-    void Op0x00();
     void Op0x01(uint8_t* code);
     void Op0x02();
     void Op0x03();
