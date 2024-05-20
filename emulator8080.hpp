@@ -29,15 +29,13 @@ class Emulator8080
     uint8_t* display{};
     uint16_t pc;
     uint8_t* memory;
-    FILE* logfile;
-    uint16_t prevSP;
     Emulator8080();
     bool LoadRom();
     uint8_t Cycle();
     void GenerateInterupt(int interuptNum);
-    struct Registers registers;
 
   private:
+    struct Registers registers;
     struct ConditionCodes conditionCodes;
     uint16_t sp;
 

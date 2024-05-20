@@ -18,7 +18,6 @@ int main(int argc, char* argv[])
   bool quit = false;
   auto lastInterrupt = std::chrono::high_resolution_clock::now();
   int interruptNum = 1;
-  int cyclecount = 0;
   auto lastDraw = std::chrono::high_resolution_clock::now();
   auto lastTimer = std::chrono::high_resolution_clock::now();
   while (!quit)
