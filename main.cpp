@@ -18,6 +18,7 @@ int main(int argc, char* argv[])
   bool quit = false;
   auto lastInterrupt = std::chrono::high_resolution_clock::now();
   int interruptNum = 1;
+  int cyclecount = 0;
   auto lastDraw = std::chrono::high_resolution_clock::now();
   auto lastTimer = std::chrono::high_resolution_clock::now();
   while (!quit)
@@ -50,13 +51,13 @@ int main(int argc, char* argv[])
       }
     }
 
-    // float dc = std::chrono::duration<float, std::chrono::microseconds::period>(currentTime - lastTimer).count();
-    // int cyclesToCatchUp = 2 * dc;
-    // int cycles = 0;
-    // while (cyclesToCatchUp > cycles)
-    // {
-        emulator8080.Cycle();
-    // }
+    float dc = std::chrono::duration<float, std::chrono::microseconds::period>(currentTime - lastTimer).count();
+    int cyclesToCatchUp = 2 * dc;
+    int cycles = 0;
+    while (cyclesToCatchUp > cycles)
+    {
+      cycles += emulator8080.Cycle();
+    }
 
     if (dtDraw > 16.0)
     {

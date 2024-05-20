@@ -8,21 +8,21 @@ unsigned char cycles8080[] = {
 	4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x10..0x1f
 	4, 10, 16, 5, 5, 5, 7, 4, 4, 10, 16, 5, 5, 5, 7, 4, //etc
 	4, 10, 13, 5, 10, 10, 10, 4, 4, 10, 13, 5, 5, 5, 7, 4,
-	
+
 	5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5, //0x40..0x4f
 	5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
 	5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
 	7, 7, 7, 7, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 7, 5,
-	
+
 	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4, //0x80..8x4f
 	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
 	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
 	4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-	
+
 	11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11, //0xc0..0xcf
-	11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11, 
-	11, 10, 10, 18, 17, 11, 7, 11, 11, 5, 10, 5, 17, 17, 7, 11, 
-	11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11, 
+	11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11,
+	11, 10, 10, 18, 17, 11, 7, 11, 11, 5, 10, 5, 17, 17, 7, 11,
+	11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11,
 };
 
 Emulator8080::Emulator8080()
@@ -32,29 +32,13 @@ Emulator8080::Emulator8080()
   pc = 0;
   halt = false;
   interuptEnabled = false;
-
-  prevSP = 0;
-
-  conditionCodes.cy = 1;
-  conditionCodes.z = 1;
-  conditionCodes.s = 1;
-  conditionCodes.p = 1;
-  conditionCodes.ac = 1;
-
-  registers.a = 0;
-  registers.b = 0;
-  registers.c = 0;
-  registers.d = 0;
-  registers.e = 0;
-  registers.h = 0;
-  registers.l = 0;
 }
 
 bool Emulator8080::LoadRom()
 {
   FILE* rom;
   int size;
-  rom = fopen("invaders.rom", "rb");
+  rom = fopen("invaders/invaders.rom", "rb");
   if (rom == NULL)
   {
     printf("Error opening rom file\n");
@@ -67,7 +51,6 @@ bool Emulator8080::LoadRom()
 
   fread(memory, 1, size, rom);
   fclose(rom);
-
 
   return true;
 }
@@ -103,7 +86,7 @@ void Emulator8080::ArithFlagsA(uint16_t res)
   conditionCodes.z = ((res & 0xFF) == 0);
   conditionCodes.s = (0x80 == (res & 0x80));
   conditionCodes.p = Parity((res & 0xFF), 8);
-  conditionCodes.cy = (res > 0xFF) || (res < 0);
+  conditionCodes.cy = (res > 0xFF);
 }
 
 void Emulator8080::FlagsZSP(uint8_t value)
@@ -143,12 +126,12 @@ void Emulator8080::WriteMem(uint16_t address, uint8_t value)
 {
   if (address < 0x2000)
   {
-    printf("Cant write to ROM %x\n", address);
+    // printf("Cant write to ROM %x\n", address);
     return;
   }
   if (address >= 0x4000)
   {
-    printf("Cant write out of RAM %x\n", address);
+    // printf("Cant write out of RAM %x\n", address);
     return;
   }
 
@@ -408,8 +391,7 @@ uint8_t Emulator8080::Cycle()
     default: UnimplementedOp(code); break;
   }
 
-  prevSP = sp;
-
+  // printf("CY: %d, P: %d, S: %d, Z: %d\n", registers.a, conditionCodes.cy, conditionCodes.p, conditionCodes.s, conditionCodes.z);
   return cycles8080[code[0]];
 }
 
@@ -627,7 +609,8 @@ void Emulator8080::Op0x22(uint8_t* code)
 void Emulator8080::Op0x23()
 {
   registers.l++;
-  if (registers.l == 0){
+  if (registers.l == 0)
+  {
     registers.h++;
   }
 }
@@ -685,7 +668,7 @@ void Emulator8080::Op0x2A(uint8_t* code)
 void Emulator8080::Op0x2B()
 {
   registers.l--;
-  if (registers.l == 0xFF);
+  if (registers.l == 0xFF)
   {
     registers.h--;
   }
@@ -758,7 +741,7 @@ void Emulator8080::Op0x37()
 }
 
 void Emulator8080::Op0x39()
-{ 
+{
   uint32_t hl = (registers.h <<8) | registers.l;
   uint32_t res = hl + sp;
   registers.h = (res & 0xFF00) >> 8;
@@ -1775,17 +1758,7 @@ void Emulator8080::Op0xDA(uint8_t* code)
 
 void Emulator8080::Op0xDB(uint8_t* code)
 {
-  switch (code[1])
-  {
-  case 0:
-    registers.a = 1;
-    break;
-  case 1:
-    registers.a = 0;
-    break;
-  default:
-    break;
-  }
+  //TODO: Implement IN
   pc++;
 }
 
@@ -2128,7 +2101,6 @@ void Emulator8080::UnimplementedOp(uint8_t* code)
 
 void Emulator8080::GenerateInterupt(int interuptNum)
 {
-  printf("%02x%02x\n", (pc & 0xFF00) >> 8, pc & 0xFF);
   Push((pc & 0xFF00) >> 8, pc & 0xFF);
   pc = 0x08 * interuptNum;
 
