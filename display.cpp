@@ -44,7 +44,7 @@ void Display::Update(uint8_t* buffer)
           destRect->y = ((screenHeight - (y*8) + (7 - i)))  * 3;
           destRect->x = x * 3;
           SDL_RenderFillRect(renderer, destRect);
-          
+
         }
       }
     }
@@ -55,7 +55,7 @@ void Display::Update(uint8_t* buffer)
   SDL_RenderPresent(renderer);
 }
 
-bool Display::ProcessInput(uint8_t* port)
+bool Display::ProcessInput(uint8_t* port1, uint8_t* port2)
 {
   bool quit = false;
   SDL_Event e;
@@ -74,11 +74,16 @@ bool Display::ProcessInput(uint8_t* port)
           switch (e.key.keysym.sym)
           {
             case SDLK_ESCAPE: quit = true; break;
-            case SDLK_RETURN: *port |= 0x1; break;
-            case SDLK_1: *port |= 0x4; break;
-            case SDLK_SPACE: *port |= 0x10; break;
-            case SDLK_LEFT: *port |= 0x20; break;
-            case SDLK_RIGHT: *port |= 0x40; break;
+            case SDLK_RETURN: *port1 |= 0x1; break;
+            case SDLK_2: *port1 |= 0x2; break;
+            case SDLK_1: *port1 |= 0x4; break;
+            case SDLK_w: *port1 |= 0x10; break;
+            case SDLK_a: *port1 |= 0x20; break;
+            case SDLK_d: *port1 |= 0x40; break;
+
+            case SDLK_UP: *port2 |= 0x10; break;
+            case SDLK_LEFT: *port2 |= 0x20; break;
+            case SDLK_RIGHT: *port2 |= 0x40; break;
             default: break;
           }
         }
@@ -87,11 +92,16 @@ bool Display::ProcessInput(uint8_t* port)
         {
           switch (e.key.keysym.sym)
           {
-            case SDLK_RETURN: *port &= ~0x1; break;
-            case SDLK_1: *port &= ~0x4; break;
-            case SDLK_SPACE: *port &= ~0x10; break;
-            case SDLK_LEFT: *port &= ~0x20; break;
-            case SDLK_RIGHT: *port &= ~0x40; break;
+            case SDLK_RETURN: *port1 &= ~0x1; break;
+            case SDLK_2: *port1 &= ~0x2; break;
+            case SDLK_1: *port1 &= ~0x4; break;
+            case SDLK_w: *port1 &= ~0x10; break;
+            case SDLK_a: *port1 &= ~0x20; break;
+            case SDLK_d: *port1 &= ~0x40; break;
+
+            case SDLK_UP: *port2 &= ~0x10; break;
+            case SDLK_LEFT: *port2 &= ~0x20; break;
+            case SDLK_RIGHT: *port2 &= ~0x40; break;
             default: break;
           }
         }

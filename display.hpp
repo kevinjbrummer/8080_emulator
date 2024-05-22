@@ -13,5 +13,5 @@ class Display
     Display(char const* title);
     ~Display();
     void Update(uint8_t* buffer);
-    bool ProcessInput(uint8_t* port);
+    bool ProcessInput(uint8_t* port1, uint8_t* port2);
 };

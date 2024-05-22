@@ -21,13 +21,14 @@ int main(int argc, char* argv[])
   auto lastDraw = std::chrono::high_resolution_clock::now();
   auto lastTimer = std::chrono::high_resolution_clock::now();
   uint8_t Port1Input = 0;
+  uint8_t Port2Input = 0;
   uint8_t shift0 = 0;
   uint8_t shift1 = 0;
   uint8_t shiftOffset = 0;
   while (!quit)
   {
 
-    quit = display.ProcessInput(&Port1Input);
+    quit = display.ProcessInput(&Port1Input, &Port2Input);
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastInterrupt).count();
@@ -68,6 +69,9 @@ int main(int argc, char* argv[])
             break;
           case 1:
             emulator8080.registers.a = Port1Input;
+            break;
+          case 2:
+            emulator8080.registers.a = Port2Input;
             break;
           case 3:
             {
