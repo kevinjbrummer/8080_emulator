@@ -22,9 +22,15 @@ int main(int argc, char* argv[])
   auto lastTimer = std::chrono::high_resolution_clock::now();
   uint8_t Port1Input = 0;
   uint8_t Port2Input = 0;
+  uint8_t Port3Output = 0;
+  uint8_t PrevPort3Output = 0;
+  uint8_t Port5Output = 0;
+  uint8_t PrevPort5Output = 0;
   uint8_t shift0 = 0;
   uint8_t shift1 = 0;
   uint8_t shiftOffset = 0;
+
+  display.ToggleMusic();
   while (!quit)
   {
 
@@ -93,9 +99,15 @@ int main(int argc, char* argv[])
           case 2:
             shiftOffset = emulator8080.registers.a & 0x7;
             break;
+          case 3:
+            Port3Output = emulator8080.registers.a;
+            break;
           case 4:
             shift0 = shift1;
             shift1 = emulator8080.registers.a;
+            break;
+        case 5:
+            Port5Output = emulator8080.registers.a;
             break;
           default:
             break;
@@ -109,6 +121,19 @@ int main(int argc, char* argv[])
         break;
       }
     }
+
+    if (Port3Output != PrevPort3Output)
+    {
+      display.PlayPort3Sounds(Port3Output, PrevPort3Output);
+    }
+    PrevPort3Output = Port3Output;
+
+    if (Port5Output != PrevPort5Output)
+    {
+      display.PlayPort5Sounds(Port5Output, PrevPort5Output);
+    }
+    PrevPort5Output = Port5Output;
+
 
     if (dtDraw > 16.0)
     {

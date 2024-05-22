@@ -1,6 +1,7 @@
 #include "display.hpp"
 #include <SDL2/SDL.h>
 #include <stdint.h>
+#include <SDL2/SDL_mixer.h>
 
 Display::Display(char const* title)
 {
@@ -9,12 +10,34 @@ Display::Display(char const* title)
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
   window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth * 3, screenHeight * 3, SDL_WINDOW_SHOWN);
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+  Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+
+  bgMusic = Mix_LoadMUS("./sound/bgMusic02.mp3");
+  playerShoot = Mix_LoadWAV("./sound/1.wav");
+  playerDeath = Mix_LoadWAV("./sound/2.wav");
+  invaderDeath = Mix_LoadWAV("./sound/3.wav");
+  fleetMovement1 = Mix_LoadWAV("./sound/4.wav");
+  fleetMovement2 = Mix_LoadWAV("./sound/5.wav");
+  fleetMovement3 = Mix_LoadWAV("./sound/6.wav");
+  fleetMovement4 = Mix_LoadWAV("./sound/7.wav");
+
+
 }
 
 Display::~Display()
 {
+  Mix_FreeMusic(bgMusic);
+  Mix_FreeChunk(playerShoot);
+  Mix_FreeChunk(playerDeath);
+  Mix_FreeChunk(invaderDeath);
+  Mix_FreeChunk(fleetMovement1);
+  Mix_FreeChunk(fleetMovement2);
+  Mix_FreeChunk(fleetMovement3);
+  Mix_FreeChunk(fleetMovement4);
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
+  Mix_Quit();
   SDL_Quit();
 }
 
@@ -110,4 +133,64 @@ bool Display::ProcessInput(uint8_t* port1, uint8_t* port2)
   }
 
   return quit;
+}
+
+void Display::ToggleMusic()
+{
+  if (!Mix_PlayingMusic())
+  {
+    Mix_PlayMusic(bgMusic, -1);
+  }
+  else
+  {
+    if (Mix_PausedMusic())
+    {
+      Mix_ResumeMusic();
+    }
+    else
+    {
+      Mix_PauseMusic();
+    }
+  }
+}
+
+void Display::PlayPort3Sounds(uint8_t port3, uint8_t prevPort3)
+{
+  if ((port3 & 0x2) && !(prevPort3 & 0x2))
+  {
+    Mix_PlayChannel(-1, playerShoot, 0);
+  }
+
+  if ((port3 & 0x4) && !(prevPort3 & 0x4))
+  {
+    Mix_PlayChannel(-1, playerDeath, 0);
+  }
+
+  if ((port3 & 0x8) && !(prevPort3 & 0x8))
+  {
+    Mix_PlayChannel(-1, invaderDeath, 0);
+  }
+}
+
+void Display::PlayPort5Sounds(uint8_t port5, uint8_t prevPort5)
+{
+  if ((port5 & 0x1) && !(prevPort5 & 0x1))
+  {
+    Mix_PlayChannel(-1, fleetMovement1, 0);
+  }
+
+  if ((port5 & 0x2) && !(prevPort5 & 0x2))
+  {
+    Mix_PlayChannel(-1, fleetMovement2, 0);
+  }
+
+  if ((port5 & 0x4) && !(prevPort5 & 0x4))
+  {
+    Mix_PlayChannel(-1, fleetMovement3, 0);
+  }
+
+  if ((port5 & 0x8) && !(prevPort5 & 0x8))
+  {
+    Mix_PlayChannel(-1, fleetMovement4, 0);
+  }
 }
