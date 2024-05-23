@@ -28,13 +28,15 @@ class Multimedia
     Multimedia(char const* title);
     ~Multimedia();
     void UpdateDisplay(uint8_t* buffer);
-    bool ProcessInput(uint8_t* port1, uint8_t* port2);
+    bool HandleEvents(uint8_t* port1, uint8_t* port2);
     void ToggleMusic();
     void PlayPortSounds(uint8_t value, uint8_t prevValue, int port);
   private:
     struct VisualEffects vfx;
     struct SoundEffects sfx;
     int ufoChannel;
+    bool isFullscreen;
+    bool isMinimized;
     bool InitVideo(char const* title);
     bool InitAudio();
 };

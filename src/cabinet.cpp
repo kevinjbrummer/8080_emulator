@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <cstdint>
 #include <chrono>
-#include <thread>
 
 const float INTERRUPT_TIMING = 1.0/60.0; //60 times per second
 const float DRAW_TIMING = 16.0; //16 milliseconds
@@ -133,15 +132,12 @@ void Cabinet::HandleSounds()
 
 void Cabinet::HandleDisplay()
 {
-  while(!quit)
-  {
-    float passedDrawTime = std::chrono::duration<float, std::chrono::milliseconds::period>(GetCurrentTime() - lastDrawTimer).count();
+  float passedDrawTime = std::chrono::duration<float, std::chrono::milliseconds::period>(GetCurrentTime() - lastDrawTimer).count();
 
-    if (passedDrawTime > DRAW_TIMING)
-    {
-      multimedia.UpdateDisplay(cpu.display);
-      lastDrawTimer = GetCurrentTime();
-    }
+  if (passedDrawTime > DRAW_TIMING)
+  {
+    multimedia.UpdateDisplay(cpu.display);
+    lastDrawTimer = GetCurrentTime();
   }
 }
 
@@ -153,15 +149,14 @@ void Cabinet::Boot()
   }
 
   multimedia.ToggleMusic();
-  std::thread display_thread(HandleDisplay, this);
   while (!quit)
   {
 
-    quit = multimedia.ProcessInput(&ports.port1, &ports.port2);
+    quit = multimedia.HandleEvents(&ports.port1, &ports.port2);
 
     HandleInterrupt();
     HandleCpuCycles();
     HandleSounds();
+    HandleDisplay();
   }
-  display_thread.join();
 }

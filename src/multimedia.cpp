@@ -28,7 +28,12 @@ Multimedia::Multimedia(char const* title)
 
 bool Multimedia::InitVideo(char const* title)
 {
-  vfx.window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_BASE * 3, SCREEN_HEIGHT_BASE * 3, SDL_WINDOW_SHOWN);
+  vfx.window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH_BASE * 3, SCREEN_HEIGHT_BASE * 3, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+
+  SDL_SetWindowMinimumSize(vfx.window, SCREEN_WIDTH_BASE, SCREEN_HEIGHT_BASE);
+
+  isFullscreen = false;
+  isMinimized = false;
 
   if (vfx.window == NULL)
   {
@@ -36,12 +41,14 @@ bool Multimedia::InitVideo(char const* title)
     return false;
   }
 
-  vfx.renderer = SDL_CreateRenderer(vfx.window, -1, SDL_RENDERER_ACCELERATED);
+  vfx.renderer = SDL_CreateRenderer(vfx.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (vfx.renderer == NULL)
   {
     printf("Could not create renderer. Error: %s\n", SDL_GetError());
     return false;
   }
+
+  SDL_RenderSetLogicalSize(vfx.renderer, SCREEN_WIDTH_BASE, SCREEN_HEIGHT_BASE);
 
   return true;
 }
@@ -160,8 +167,8 @@ void Multimedia::UpdateDisplay(uint8_t* buffer)
   SDL_Rect* destRect = new SDL_Rect;
   destRect->x = 0;
   destRect->y = 0;
-  destRect->w = 3;
-  destRect->h = 3;
+  destRect->w = 1;
+  destRect->h = 1;
 
 
   for (int x = 0; x < SCREEN_WIDTH_BASE; x++)
@@ -186,8 +193,8 @@ void Multimedia::UpdateDisplay(uint8_t* buffer)
           {
             SDL_SetRenderDrawColor(vfx.renderer, 255, 255, 255, 255); //white
           }
-          destRect->y = ((SCREEN_HEIGHT_BASE - (y*8) + (7 - i)))  * 3;
-          destRect->x = x * 3;
+          destRect->y = ((SCREEN_HEIGHT_BASE - (y*8) + (7 - i)));
+          destRect->x = x;
           SDL_RenderFillRect(vfx.renderer, destRect);
 
         }
@@ -200,7 +207,7 @@ void Multimedia::UpdateDisplay(uint8_t* buffer)
   SDL_RenderPresent(vfx.renderer);
 }
 
-bool Multimedia::ProcessInput(uint8_t* port1, uint8_t* port2)
+bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
 {
   bool quit = false;
   SDL_Event e;
@@ -232,6 +239,19 @@ bool Multimedia::ProcessInput(uint8_t* port1, uint8_t* port2)
             case SDLK_UP: *port2 |= 0x10; break;
             case SDLK_LEFT: *port2 |= 0x20; break;
             case SDLK_RIGHT: *port2 |= 0x40; break;
+
+            case SDLK_f:
+              if (isFullscreen)
+              {
+                SDL_SetWindowFullscreen(vfx.window, 0);
+                isFullscreen = false;
+              }
+              else
+              {
+                SDL_SetWindowFullscreen(vfx.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                isFullscreen = true;
+                isMinimized = false;
+              }
             default: break;
           }
         }
@@ -254,6 +274,18 @@ bool Multimedia::ProcessInput(uint8_t* port1, uint8_t* port2)
           }
         }
         break;
+      case SDL_WINDOWEVENT:
+        {
+          switch (e.window.event)
+          {
+          case SDL_WINDOWEVENT_SIZE_CHANGED:
+            SDL_RenderPresent(vfx.renderer);
+            break;
+          
+          default:
+            break;
+          }
+        }
     }
   }
 
