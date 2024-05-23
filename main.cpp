@@ -1,5 +1,5 @@
 #include "i8080Cpu.hpp"
-#include "display.hpp"
+#include "multimedia.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <chrono>
@@ -8,7 +8,7 @@
 int main(int argc, char* argv[])
 {
   I8080Cpu cpu;
-  Display display("Space Invaders");
+  Multimedia multimedia("Space Invaders");
 
   if (!cpu.LoadRom())
   {
@@ -30,11 +30,11 @@ int main(int argc, char* argv[])
   uint8_t shift1 = 0;
   uint8_t shiftOffset = 0;
 
-  display.ToggleMusic();
+  multimedia.ToggleMusic();
   while (!quit)
   {
 
-    quit = display.ProcessInput(&Port1Input, &Port2Input);
+    quit = multimedia.ProcessInput(&Port1Input, &Port2Input);
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastInterrupt).count();
@@ -124,20 +124,20 @@ int main(int argc, char* argv[])
 
     if (Port3Output != PrevPort3Output)
     {
-      display.PlayPort3Sounds(Port3Output, PrevPort3Output);
+      multimedia.PlayPortSounds(Port3Output, PrevPort3Output, 3);
     }
     PrevPort3Output = Port3Output;
 
     if (Port5Output != PrevPort5Output)
     {
-      display.PlayPort5Sounds(Port5Output, PrevPort5Output);
+      multimedia.PlayPortSounds(Port5Output, PrevPort5Output, 5);
     }
     PrevPort5Output = Port5Output;
 
 
     if (dtDraw > 16.0)
     {
-      display.Update(cpu.display);
+      multimedia.Update(cpu.display);
       lastDraw = currentTime;
 
     }

@@ -2,17 +2,9 @@
 #include <stdint.h>
 #include <SDL2/SDL_mixer.h>
 
-class Display
-{
-  public:
-    int screenWidth;
-    int screenHeight;
-    SDL_Window* window{};
-    SDL_Renderer* renderer{};
-    SDL_Texture* texture{};
-
+struct SoundEffects {
+    Mix_Music* bgMusic{};
     Mix_Chunk* ufoSound{};
-    int ufoChannel;
     Mix_Chunk* playerShoot{};
     Mix_Chunk* playerDeath{};
     Mix_Chunk* invaderDeath{};
@@ -22,14 +14,27 @@ class Display
     Mix_Chunk* fleetMovement4{};
     Mix_Chunk* ufoHit{};
     Mix_Chunk* insertCoin{};
+};
 
-    Mix_Music* bgMusic{};
-
-    Display(char const* title);
-    ~Display();
+class Multimedia
+{
+  public:
+    Multimedia(char const* title);
+    ~Multimedia();
     void Update(uint8_t* buffer);
     bool ProcessInput(uint8_t* port1, uint8_t* port2);
     void ToggleMusic();
-    void PlayPort3Sounds(uint8_t port3, uint8_t prevPort3);
-    void PlayPort5Sounds(uint8_t port5, uint8_t prevPort5);
+    void PlayPortSounds(uint8_t value, uint8_t prevValue, int port);
+  private:
+    SDL_Window* window{};
+    SDL_Renderer* renderer{};
+    SDL_Texture* texture{};
+
+    SoundEffects sfx;
+    int ufoChannel;
+
+
+
+    bool InitVideo(char const* title);
+    bool InitAudio();
 };
