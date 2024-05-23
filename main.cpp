@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 
     if (dtDraw > 16.0)
     {
-      multimedia.Update(cpu.display);
+      multimedia.UpdateDisplay(cpu.display);
       lastDraw = currentTime;
 
     }

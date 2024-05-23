@@ -26,7 +26,7 @@ class Multimedia
   public:
     Multimedia(char const* title);
     ~Multimedia();
-    void Update(uint8_t* buffer);
+    void UpdateDisplay(uint8_t* buffer);
     bool ProcessInput(uint8_t* port1, uint8_t* port2);
     void ToggleMusic();
     void PlayPortSounds(uint8_t value, uint8_t prevValue, int port);

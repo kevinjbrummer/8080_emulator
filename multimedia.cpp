@@ -153,7 +153,7 @@ Multimedia::~Multimedia()
   SDL_Quit();
 }
 
-void Multimedia::Update(uint8_t* buffer)
+void Multimedia::UpdateDisplay(uint8_t* buffer)
 {
   SDL_SetRenderDrawColor(vfx.renderer, 0, 0, 0, 255);
   SDL_RenderClear(vfx.renderer);
