@@ -112,7 +112,7 @@ bool Display::ProcessInput(uint8_t* port1, uint8_t* port2)
             case SDLK_ESCAPE: quit = true; break;
             case SDLK_RETURN:
               *port1 |= 0x1;
-              Mix_PlayChannel(-1, playerShoot, 0);
+              Mix_PlayChannel(-1, insertCoin, 0);
               break;
             case SDLK_2: *port1 |= 0x2; break;
             case SDLK_1: *port1 |= 0x4; break;
