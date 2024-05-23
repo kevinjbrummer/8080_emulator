@@ -63,7 +63,7 @@ bool Multimedia::InitAudio()
     return false;
   }
 
-  sfx.bgMusic = Mix_LoadMUS("./sound/bgMusic02.mp3");
+  sfx.bgMusic = Mix_LoadMUS("./sound/bgm.mp3");
   if (sfx.bgMusic == NULL)
   {
     printf("Could not Load background music. Error: %s\n", SDL_GetError());
@@ -140,6 +140,13 @@ bool Multimedia::InitAudio()
     return false;
   }
 
+    sfx.gameStart = Mix_LoadWAV("./sound/gameStart.wav");
+  if (sfx.gameStart == NULL)
+  {
+    printf("Could not Load gameStart.wav. Error: %s\n", SDL_GetError());
+    return false;
+  }
+
   return true;
 }
 
@@ -155,6 +162,7 @@ Multimedia::~Multimedia()
   Mix_FreeChunk(sfx.fleetMovement3);
   Mix_FreeChunk(sfx.fleetMovement4);
   Mix_FreeChunk(sfx.insertCoin);
+  Mix_FreeChunk(sfx.gameStart);
   Mix_FreeChunk(sfx.ufoHit);
   SDL_DestroyRenderer(vfx.renderer);
   SDL_DestroyWindow(vfx.window);
@@ -229,14 +237,26 @@ bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
           {
             case SDLK_ESCAPE: quit = true; break;
             case SDLK_RETURN:
+              *port1 |= 0x1;
               if (!isPaused)
               {
-                *port1 |= 0x1;
                 Mix_PlayChannel(-1, sfx.insertCoin, 0);
               }
               break;
-            case SDLK_2: *port1 |= 0x2; break;
-            case SDLK_1: *port1 |= 0x4; break;
+            case SDLK_2: 
+              *port1 |= 0x2; 
+              if (!isPaused)
+              {
+                Mix_PlayChannel(-1, sfx.gameStart, 0);
+              }
+              break;
+            case SDLK_1: 
+              *port1 |= 0x4; 
+              if (!isPaused)
+              {
+                Mix_PlayChannel(-1, sfx.gameStart, 0);
+              }
+              break;
             case SDLK_w: *port1 |= 0x10; break;
             case SDLK_a: *port1 |= 0x20; break;
             case SDLK_d: *port1 |= 0x40; break;

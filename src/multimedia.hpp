@@ -15,6 +15,7 @@ struct SoundEffects {
     Mix_Chunk* fleetMovement4{};
     Mix_Chunk* ufoHit{};
     Mix_Chunk* insertCoin{};
+    Mix_Chunk* gameStart{};
 };
 
 struct VisualEffects {
