@@ -25,6 +25,7 @@ struct VisualEffects {
 class Multimedia
 {
   public:
+    bool isPaused;
     Multimedia(char const* title);
     ~Multimedia();
     void UpdateDisplay(uint8_t* buffer);

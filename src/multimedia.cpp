@@ -24,6 +24,8 @@ Multimedia::Multimedia(char const* title)
     exit(1);
   }
 
+  isPaused = false;
+
 }
 
 bool Multimedia::InitVideo(char const* title)
@@ -227,8 +229,11 @@ bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
           {
             case SDLK_ESCAPE: quit = true; break;
             case SDLK_RETURN:
-              *port1 |= 0x1;
-              Mix_PlayChannel(-1, sfx.insertCoin, 0);
+              if (!isPaused)
+              {
+                *port1 |= 0x1;
+                Mix_PlayChannel(-1, sfx.insertCoin, 0);
+              }
               break;
             case SDLK_2: *port1 |= 0x2; break;
             case SDLK_1: *port1 |= 0x4; break;
@@ -252,6 +257,11 @@ bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
                 isFullscreen = true;
                 isMinimized = false;
               }
+              break;
+            case SDLK_p:
+              ToggleMusic();
+              isPaused = !isPaused;
+              break;
             default: break;
           }
         }
@@ -281,7 +291,8 @@ bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
           case SDL_WINDOWEVENT_SIZE_CHANGED:
             SDL_RenderPresent(vfx.renderer);
             break;
-          
+          case SDL_WINDOWEVENT_EXPOSED:
+            SDL_RenderPresent(vfx.renderer);
           default:
             break;
           }

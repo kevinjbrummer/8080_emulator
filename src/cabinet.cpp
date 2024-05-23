@@ -155,8 +155,11 @@ void Cabinet::Boot()
     quit = multimedia.HandleEvents(&ports.port1, &ports.port2);
 
     HandleInterrupt();
-    HandleCpuCycles();
-    HandleSounds();
-    HandleDisplay();
+    if (!multimedia.isPaused)
+    {
+      HandleCpuCycles();
+      HandleSounds();
+      HandleDisplay();
+    }
   }
 }
