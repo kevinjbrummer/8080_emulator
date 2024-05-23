@@ -23,6 +23,7 @@ Display::Display(char const* title)
   fleetMovement3 = Mix_LoadWAV("./sound/6.wav");
   fleetMovement4 = Mix_LoadWAV("./sound/7.wav");
   ufoHit = Mix_LoadWAV("./sound/8.wav");
+  insertCoin = Mix_LoadWAV("./sound/insertCoin.wav");
 
 
 }
@@ -38,6 +39,7 @@ Display::~Display()
   Mix_FreeChunk(fleetMovement2);
   Mix_FreeChunk(fleetMovement3);
   Mix_FreeChunk(fleetMovement4);
+  Mix_FreeChunk(insertCoin);
   Mix_FreeChunk(ufoHit);
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
@@ -108,7 +110,10 @@ bool Display::ProcessInput(uint8_t* port1, uint8_t* port2)
           switch (e.key.keysym.sym)
           {
             case SDLK_ESCAPE: quit = true; break;
-            case SDLK_RETURN: *port1 |= 0x1; break;
+            case SDLK_RETURN:
+              *port1 |= 0x1;
+              Mix_PlayChannel(-1, playerShoot, 0);
+              break;
             case SDLK_2: *port1 |= 0x2; break;
             case SDLK_1: *port1 |= 0x4; break;
             case SDLK_w: *port1 |= 0x10; break;

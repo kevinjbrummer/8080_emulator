@@ -21,6 +21,7 @@ class Display
     Mix_Chunk* fleetMovement3{};
     Mix_Chunk* fleetMovement4{};
     Mix_Chunk* ufoHit{};
+    Mix_Chunk* insertCoin{};
 
     Mix_Music* bgMusic{};
 
