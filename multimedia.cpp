@@ -178,6 +178,9 @@ void Multimedia::UpdateDisplay(uint8_t* buffer)
           if (y*8 >= 10 && y*8 <= 60)
           {
             SDL_SetRenderDrawColor(vfx.renderer, 57, 255, 20, 255); //green
+          } else if (y*8 <= SCREEN_HEIGHT_BASE - 40 && y*8 >= SCREEN_HEIGHT_BASE - 60)
+          {
+            SDL_SetRenderDrawColor(vfx.renderer, 255, 247, 0, 255); //yellow
           }
           else
           {
