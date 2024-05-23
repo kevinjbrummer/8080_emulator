@@ -1,4 +1,4 @@
-OBJS = main.cpp i8080Cpu.cpp multimedia.cpp
+OBJS = main.cpp i8080Cpu.cpp multimedia.cpp cabinet.cpp
 
 CC = g++
 

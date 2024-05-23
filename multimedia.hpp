@@ -1,3 +1,4 @@
+#pragma once
 #include <SDL2/SDL.h>
 #include <stdint.h>
 #include <SDL2/SDL_mixer.h>
@@ -31,8 +32,8 @@ class Multimedia
     void ToggleMusic();
     void PlayPortSounds(uint8_t value, uint8_t prevValue, int port);
   private:
-    VisualEffects vfx;
-    SoundEffects sfx;
+    struct VisualEffects vfx;
+    struct SoundEffects sfx;
     int ufoChannel;
     bool InitVideo(char const* title);
     bool InitAudio();

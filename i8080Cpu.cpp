@@ -110,6 +110,16 @@ void I8080Cpu::Pop(uint8_t* high, uint8_t* low)
   sp += 2;
 }
 
+uint8_t I8080Cpu::ReadRegisterA()
+{
+  return registers.a;
+}
+
+void I8080Cpu::WriteRegisterA(uint8_t value)
+{
+  registers.a = value;
+}
+
 uint8_t I8080Cpu::ReadFromHL()
 {
   uint16_t address = (registers.h << 8) | registers.l;

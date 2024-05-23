@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 #include <cstdio>
 
@@ -29,13 +30,15 @@ class I8080Cpu
     uint8_t* display{};
     uint16_t pc;
     uint8_t* memory;
-    struct Registers registers;
     I8080Cpu();
     bool LoadRom();
     uint8_t Cycle();
     void GenerateInterupt(int interuptNum);
+    void WriteRegisterA(uint8_t value);
+    uint8_t ReadRegisterA();
 
   private:
+    struct Registers registers;
     struct ConditionCodes conditionCodes;
     uint16_t sp;
 
