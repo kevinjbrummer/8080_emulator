@@ -11,6 +11,8 @@ class Display
     SDL_Renderer* renderer{};
     SDL_Texture* texture{};
 
+    Mix_Chunk* ufoSound{};
+    int ufoChannel;
     Mix_Chunk* playerShoot{};
     Mix_Chunk* playerDeath{};
     Mix_Chunk* invaderDeath{};
@@ -18,6 +20,7 @@ class Display
     Mix_Chunk* fleetMovement2{};
     Mix_Chunk* fleetMovement3{};
     Mix_Chunk* fleetMovement4{};
+    Mix_Chunk* ufoHit{};
 
     Mix_Music* bgMusic{};
 

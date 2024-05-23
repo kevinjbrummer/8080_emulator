@@ -1,4 +1,4 @@
-OBJS = main.cpp emulator8080.cpp display.cpp
+OBJS = main.cpp i8080Cpu.cpp display.cpp
 
 CC = g++
 

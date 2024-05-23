@@ -14,6 +14,7 @@ Display::Display(char const* title)
   Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
 
   bgMusic = Mix_LoadMUS("./sound/bgMusic02.mp3");
+  ufoSound = Mix_LoadWAV("./sound/0.wav");
   playerShoot = Mix_LoadWAV("./sound/1.wav");
   playerDeath = Mix_LoadWAV("./sound/2.wav");
   invaderDeath = Mix_LoadWAV("./sound/3.wav");
@@ -21,6 +22,7 @@ Display::Display(char const* title)
   fleetMovement2 = Mix_LoadWAV("./sound/5.wav");
   fleetMovement3 = Mix_LoadWAV("./sound/6.wav");
   fleetMovement4 = Mix_LoadWAV("./sound/7.wav");
+  ufoHit = Mix_LoadWAV("./sound/8.wav");
 
 
 }
@@ -28,6 +30,7 @@ Display::Display(char const* title)
 Display::~Display()
 {
   Mix_FreeMusic(bgMusic);
+  Mix_FreeChunk(ufoSound);
   Mix_FreeChunk(playerShoot);
   Mix_FreeChunk(playerDeath);
   Mix_FreeChunk(invaderDeath);
@@ -35,6 +38,7 @@ Display::~Display()
   Mix_FreeChunk(fleetMovement2);
   Mix_FreeChunk(fleetMovement3);
   Mix_FreeChunk(fleetMovement4);
+  Mix_FreeChunk(ufoHit);
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   Mix_Quit();
@@ -156,6 +160,16 @@ void Display::ToggleMusic()
 
 void Display::PlayPort3Sounds(uint8_t port3, uint8_t prevPort3)
 {
+
+  if ((port3 & 0x1) && !(prevPort3 & 0x1))
+  {
+    ufoChannel = Mix_PlayChannel(-1, ufoSound, -1);
+  }
+  else if (!(port3 & 0x1) && (prevPort3 & 0x1))
+  {
+    Mix_HaltChannel(ufoChannel);
+  }
+
   if ((port3 & 0x2) && !(prevPort3 & 0x2))
   {
     Mix_PlayChannel(-1, playerShoot, 0);
@@ -192,5 +206,10 @@ void Display::PlayPort5Sounds(uint8_t port5, uint8_t prevPort5)
   if ((port5 & 0x8) && !(prevPort5 & 0x8))
   {
     Mix_PlayChannel(-1, fleetMovement4, 0);
+  }
+
+  if ((port5 & 0x10) && !(prevPort5 & 0x10))
+  {
+    Mix_PlayChannel(-1, ufoHit, 0);
   }
 }

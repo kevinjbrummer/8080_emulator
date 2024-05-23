@@ -21,7 +21,7 @@ struct ConditionCodes
   uint8_t ac;
 };
 
-class Emulator8080
+class I8080Cpu
 {
   public:
     bool halt;
@@ -30,7 +30,7 @@ class Emulator8080
     uint16_t pc;
     uint8_t* memory;
     struct Registers registers;
-    Emulator8080();
+    I8080Cpu();
     bool LoadRom();
     uint8_t Cycle();
     void GenerateInterupt(int interuptNum);

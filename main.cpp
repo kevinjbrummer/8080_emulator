@@ -1,4 +1,4 @@
-#include "emulator8080.hpp"
+#include "i8080Cpu.hpp"
 #include "display.hpp"
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,10 +7,10 @@
 
 int main(int argc, char* argv[])
 {
-  Emulator8080 emulator8080;
+  I8080Cpu cpu;
   Display display("Space Invaders");
 
-  if (!emulator8080.LoadRom())
+  if (!cpu.LoadRom())
   {
     exit(EXIT_FAILURE);
   }
@@ -42,10 +42,10 @@ int main(int argc, char* argv[])
     float dtDraw = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastDraw).count();
 
       if(dt >= 1.0/60.0){
-    if (emulator8080.interuptEnabled)
+    if (cpu.interuptEnabled)
     {
 
-        emulator8080.GenerateInterupt(interruptNum);
+        cpu.GenerateInterupt(interruptNum);
         if (interruptNum == 1)
         {
           interruptNum = 2;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
     int cycles = 0;
     while (cyclesToCatchUp > cycles)
     {
-      uint8_t* op = &emulator8080.memory[emulator8080.pc];
+      uint8_t* op = &cpu.memory[cpu.pc];
       switch (op[0])
       {
       case 0xDB:
@@ -71,25 +71,25 @@ int main(int argc, char* argv[])
           switch (op[1])
           {
           case 0:
-            emulator8080.registers.a = 1;
+            cpu.registers.a = 1;
             break;
           case 1:
-            emulator8080.registers.a = Port1Input;
+            cpu.registers.a = Port1Input;
             break;
           case 2:
-            emulator8080.registers.a = Port2Input;
+            cpu.registers.a = Port2Input;
             break;
           case 3:
             {
               uint16_t value = (shift1 << 8) | shift0;
-              emulator8080.registers.a = ((value >> (8 - shiftOffset)) & 0xFF);
+              cpu.registers.a = ((value >> (8 - shiftOffset)) & 0xFF);
             }
             break;
           default:
             break;
           }
         }
-        emulator8080.pc += 2;
+        cpu.pc += 2;
         cycles += 3;
         break;
       case 0xD3:
@@ -97,27 +97,27 @@ int main(int argc, char* argv[])
           switch (op[1])
           {
           case 2:
-            shiftOffset = emulator8080.registers.a & 0x7;
+            shiftOffset = cpu.registers.a & 0x7;
             break;
           case 3:
-            Port3Output = emulator8080.registers.a;
+            Port3Output = cpu.registers.a;
             break;
           case 4:
             shift0 = shift1;
-            shift1 = emulator8080.registers.a;
+            shift1 = cpu.registers.a;
             break;
         case 5:
-            Port5Output = emulator8080.registers.a;
+            Port5Output = cpu.registers.a;
             break;
           default:
             break;
           }
         }
-        emulator8080.pc += 2;
+        cpu.pc += 2;
         cycles += 3;
         break;
       default:
-        cycles += emulator8080.Cycle();
+        cycles += cpu.Cycle();
         break;
       }
     }
@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 
     if (dtDraw > 16.0)
     {
-      display.Update(emulator8080.display);
+      display.Update(cpu.display);
       lastDraw = currentTime;
 
     }

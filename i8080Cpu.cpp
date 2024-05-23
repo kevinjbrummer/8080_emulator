@@ -1,4 +1,4 @@
-#include "emulator8080.hpp"
+#include "i8080Cpu.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstdio>
@@ -25,7 +25,7 @@ unsigned char cycles8080[] = {
 	11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11,
 };
 
-Emulator8080::Emulator8080()
+I8080Cpu::I8080Cpu()
 {
   memory = new uint8_t[1024 * 16]();
   display = &memory[0x2400];
@@ -34,7 +34,7 @@ Emulator8080::Emulator8080()
   interuptEnabled = false;
 }
 
-bool Emulator8080::LoadRom()
+bool I8080Cpu::LoadRom()
 {
   FILE* rom;
   int size;
@@ -55,7 +55,7 @@ bool Emulator8080::LoadRom()
   return true;
 }
 
-int Emulator8080::Parity(int x, int size)
+int I8080Cpu::Parity(int x, int size)
 {
 
   int i;
@@ -73,7 +73,7 @@ int Emulator8080::Parity(int x, int size)
   return (p % 2 == 0);
 }
 
-void Emulator8080::LogicFlagsA()
+void I8080Cpu::LogicFlagsA()
 {
   conditionCodes.z = (registers.a == 0);
   conditionCodes.s = (0x80 == (registers.a & 0x80));
@@ -81,7 +81,7 @@ void Emulator8080::LogicFlagsA()
   conditionCodes.cy = conditionCodes.ac = 0;
 }
 
-void Emulator8080::ArithFlagsA(uint16_t res)
+void I8080Cpu::ArithFlagsA(uint16_t res)
 {
   conditionCodes.z = ((res & 0xFF) == 0);
   conditionCodes.s = (0x80 == (res & 0x80));
@@ -89,40 +89,40 @@ void Emulator8080::ArithFlagsA(uint16_t res)
   conditionCodes.cy = (res > 0xFF);
 }
 
-void Emulator8080::FlagsZSP(uint8_t value)
+void I8080Cpu::FlagsZSP(uint8_t value)
 {
   conditionCodes.z = (value == 0);
   conditionCodes.s = (0x80 == (value & 0x80));
   conditionCodes.p = Parity(value, 8);
 }
 
-void Emulator8080::Push(uint8_t high, uint8_t low)
+void I8080Cpu::Push(uint8_t high, uint8_t low)
 {
   WriteMem(sp - 1, high);
   WriteMem(sp - 2, low);
   sp -= 2;
 }
 
-void Emulator8080::Pop(uint8_t* high, uint8_t* low)
+void I8080Cpu::Pop(uint8_t* high, uint8_t* low)
 {
   *high = memory[sp + 1];
   *low = memory[sp];
   sp += 2;
 }
 
-uint8_t Emulator8080::ReadFromHL()
+uint8_t I8080Cpu::ReadFromHL()
 {
   uint16_t address = (registers.h << 8) | registers.l;
   return memory[address];
 }
 
-void Emulator8080::WriteToHL(uint8_t value)
+void I8080Cpu::WriteToHL(uint8_t value)
 {
   uint16_t address = (registers.h << 8) | registers.l;
   WriteMem(address, value);
 }
 
-void Emulator8080::WriteMem(uint16_t address, uint8_t value)
+void I8080Cpu::WriteMem(uint16_t address, uint8_t value)
 {
   if (address < 0x2000)
   {
@@ -138,7 +138,7 @@ void Emulator8080::WriteMem(uint16_t address, uint8_t value)
   memory[address] = value;
 }
 
-uint8_t Emulator8080::Cycle()
+uint8_t I8080Cpu::Cycle()
 {
   uint8_t* code = &memory[pc];
   pc++;
@@ -395,20 +395,20 @@ uint8_t Emulator8080::Cycle()
   return cycles8080[code[0]];
 }
 
-void Emulator8080::Op0x01(uint8_t* code)
+void I8080Cpu::Op0x01(uint8_t* code)
 {
   registers.b = code[2];
   registers.c = code[1];
   pc += 2;
 }
 
-void Emulator8080::Op0x02()
+void I8080Cpu::Op0x02()
 {
   uint16_t address = (registers.b << 8) | registers.c;
   WriteMem(address, registers.a);
 }
 
-void Emulator8080::Op0x03()
+void I8080Cpu::Op0x03()
 {
   registers.c++;
   if (registers.c == 0)
@@ -417,33 +417,33 @@ void Emulator8080::Op0x03()
   }
 }
 
-void Emulator8080::Op0x04()
+void I8080Cpu::Op0x04()
 {
   registers.b += 1;
   FlagsZSP(registers.b);
 }
 
-void Emulator8080::Op0x05()
+void I8080Cpu::Op0x05()
 {
   registers.b -= 1;
   FlagsZSP(registers.b);
 }
 
 
-void Emulator8080::Op0x06(uint8_t* code)
+void I8080Cpu::Op0x06(uint8_t* code)
 {
   registers.b = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x07()
+void I8080Cpu::Op0x07()
 {
   uint8_t res = registers.a;
   registers.a = ((res & 0x80) >> 7) | (res << 1);
   conditionCodes.cy = (0x80 == (res & 0x80));
 }
 
-void Emulator8080::Op0x09()
+void I8080Cpu::Op0x09()
 {
   uint32_t hl = (registers.h <<8) | registers.l;
   uint32_t bc = (registers.b <<8) | registers.c;
@@ -454,13 +454,13 @@ void Emulator8080::Op0x09()
 }
 
 
-void Emulator8080::Op0x0A()
+void I8080Cpu::Op0x0A()
 {
   uint16_t address = (registers.b << 8) | registers.c;
   registers.a = memory[address];
 }
 
-void Emulator8080::Op0x0B()
+void I8080Cpu::Op0x0B()
 {
   registers.c--;
   if (registers.c == 0xFF)
@@ -469,45 +469,45 @@ void Emulator8080::Op0x0B()
   }
 }
 
-void Emulator8080::Op0x0C()
+void I8080Cpu::Op0x0C()
 {
   registers.c += 1;
   FlagsZSP(registers.c);
 }
 
-void Emulator8080::Op0x0D()
+void I8080Cpu::Op0x0D()
 {
   registers.c -= 1;
   FlagsZSP(registers.c);
 }
 
-void Emulator8080::Op0x0E(uint8_t* code)
+void I8080Cpu::Op0x0E(uint8_t* code)
 {
   registers.c = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x0F()
+void I8080Cpu::Op0x0F()
 {
   uint8_t res = registers.a;
   registers.a = ((res & 1) << 7) | (res >> 1);
   conditionCodes.cy = (1 == (res & 1));
 }
 
-void Emulator8080::Op0x11(uint8_t* code)
+void I8080Cpu::Op0x11(uint8_t* code)
 {
   registers.d = code[2];
   registers.e = code[1];
   pc += 2;
 }
 
-void Emulator8080::Op0x12()
+void I8080Cpu::Op0x12()
 {
   uint16_t address = (registers.d << 8) | registers.e;
   WriteMem(address, registers.a);
 }
 
-void Emulator8080::Op0x13()
+void I8080Cpu::Op0x13()
 {
   registers.e++;
   if (registers.e == 0)
@@ -516,25 +516,25 @@ void Emulator8080::Op0x13()
   }
 }
 
-void Emulator8080::Op0x14()
+void I8080Cpu::Op0x14()
 {
   registers.d += 1;
   FlagsZSP(registers.d);
 }
 
-void Emulator8080::Op0x15()
+void I8080Cpu::Op0x15()
 {
   registers.d -= 1;
   FlagsZSP(registers.d);
 }
 
-void Emulator8080::Op0x16(uint8_t* code)
+void I8080Cpu::Op0x16(uint8_t* code)
 {
   registers.d = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x17()
+void I8080Cpu::Op0x17()
 {
   uint8_t res = registers.a;
   registers.a = conditionCodes.cy | (res << 1);
@@ -542,7 +542,7 @@ void Emulator8080::Op0x17()
 }
 
 
-void Emulator8080::Op0x19()
+void I8080Cpu::Op0x19()
 {
   uint32_t hl = (registers.h <<8) | registers.l;
   uint32_t de = (registers.d <<8) | registers.e;
@@ -552,13 +552,13 @@ void Emulator8080::Op0x19()
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
 }
 
-void Emulator8080::Op0x1A()
+void I8080Cpu::Op0x1A()
 {
   uint16_t address = (registers.d << 8) | registers.e;
   registers.a = memory[address];
 }
 
-void Emulator8080::Op0x1B()
+void I8080Cpu::Op0x1B()
 {
   registers.e--;
   if (registers.e == 0xFF){
@@ -566,39 +566,39 @@ void Emulator8080::Op0x1B()
   }
 }
 
-void Emulator8080::Op0x1C()
+void I8080Cpu::Op0x1C()
 {
   registers.e += 1;
   FlagsZSP(registers.e);
 }
 
-void Emulator8080::Op0x1D()
+void I8080Cpu::Op0x1D()
 {
   registers.e -= 1;
   FlagsZSP(registers.e);
 }
 
-void Emulator8080::Op0x1E(uint8_t* code)
+void I8080Cpu::Op0x1E(uint8_t* code)
 {
   registers.e = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x1F()
+void I8080Cpu::Op0x1F()
 {
   uint8_t res = registers.a;
   registers.a = (conditionCodes.cy << 7) | (res >> 1);
   conditionCodes.cy = (1 == (res & 1));
 }
 
-void Emulator8080::Op0x21(uint8_t* code)
+void I8080Cpu::Op0x21(uint8_t* code)
 {
   registers.h = code[2];
   registers.l = code[1];
   pc += 2;
 }
 
-void Emulator8080::Op0x22(uint8_t* code)
+void I8080Cpu::Op0x22(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
   WriteMem(address + 1, registers.h);
@@ -606,7 +606,7 @@ void Emulator8080::Op0x22(uint8_t* code)
   pc += 2;
 }
 
-void Emulator8080::Op0x23()
+void I8080Cpu::Op0x23()
 {
   registers.l++;
   if (registers.l == 0)
@@ -615,25 +615,25 @@ void Emulator8080::Op0x23()
   }
 }
 
-void Emulator8080::Op0x24()
+void I8080Cpu::Op0x24()
 {
   registers.h += 1;
   FlagsZSP(registers.h);
 }
 
-void Emulator8080::Op0x25()
+void I8080Cpu::Op0x25()
 {
   registers.h -= 1;
   FlagsZSP(registers.h);
 }
 
-void Emulator8080::Op0x26(uint8_t* code)
+void I8080Cpu::Op0x26(uint8_t* code)
 {
   registers.h = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x27()
+void I8080Cpu::Op0x27()
 {
   if ((registers.a & 0xF) > 9)
   {
@@ -648,7 +648,7 @@ void Emulator8080::Op0x27()
   }
 }
 
-void Emulator8080::Op0x29()
+void I8080Cpu::Op0x29()
 {
   uint32_t hl = (registers.h <<8) | registers.l;
   uint32_t res = hl + hl;
@@ -657,7 +657,7 @@ void Emulator8080::Op0x29()
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
 }
 
-void Emulator8080::Op0x2A(uint8_t* code)
+void I8080Cpu::Op0x2A(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
   registers.h = memory[address + 1];
@@ -665,7 +665,7 @@ void Emulator8080::Op0x2A(uint8_t* code)
   pc += 2;
 }
 
-void Emulator8080::Op0x2B()
+void I8080Cpu::Op0x2B()
 {
   registers.l--;
   if (registers.l == 0xFF)
@@ -674,73 +674,73 @@ void Emulator8080::Op0x2B()
   }
 }
 
-void Emulator8080::Op0x2C()
+void I8080Cpu::Op0x2C()
 {
   registers.l += 1;
   FlagsZSP(registers.l);
 }
 
-void Emulator8080::Op0x2D()
+void I8080Cpu::Op0x2D()
 {
   registers.l -= 1;
   FlagsZSP(registers.l);
 }
 
-void Emulator8080::Op0x2E(uint8_t* code)
+void I8080Cpu::Op0x2E(uint8_t* code)
 {
   registers.l = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x2F()
+void I8080Cpu::Op0x2F()
 {
   registers.a = ~registers.a;
 }
 
-void Emulator8080::Op0x31(uint8_t* code)
+void I8080Cpu::Op0x31(uint8_t* code)
 {
   sp = (code[2] << 8) | code[1];
   pc += 2;
 }
 
-void Emulator8080::Op0x32(uint8_t* code)
+void I8080Cpu::Op0x32(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
   WriteMem(address, registers.a);
   pc += 2;
 }
 
-void Emulator8080::Op0x33()
+void I8080Cpu::Op0x33()
 {
   sp++;
 }
 
-void Emulator8080::Op0x34()
+void I8080Cpu::Op0x34()
 {
   uint8_t res = ReadFromHL() + 1;
   FlagsZSP(res);
   WriteToHL(res);
 }
 
-void Emulator8080::Op0x35()
+void I8080Cpu::Op0x35()
 {
   uint8_t res = ReadFromHL() - 1;
   FlagsZSP(res);
   WriteToHL(res);
 }
 
-void Emulator8080::Op0x36(uint8_t* code)
+void I8080Cpu::Op0x36(uint8_t* code)
 {
   WriteToHL(code[1]);
   pc++;
 }
 
-void Emulator8080::Op0x37()
+void I8080Cpu::Op0x37()
 {
   conditionCodes.cy = 1;
 }
 
-void Emulator8080::Op0x39()
+void I8080Cpu::Op0x39()
 {
   uint32_t hl = (registers.h <<8) | registers.l;
   uint32_t res = hl + sp;
@@ -749,781 +749,781 @@ void Emulator8080::Op0x39()
   conditionCodes.cy = ((res & 0xFFFF0000) != 0);
 }
 
-void Emulator8080::Op0x3A(uint8_t* code)
+void I8080Cpu::Op0x3A(uint8_t* code)
 {
   uint16_t address = (code[2] << 8) | code[1];
   registers.a = memory[address];
   pc += 2;
 }
 
-void Emulator8080::Op0x3B()
+void I8080Cpu::Op0x3B()
 {
   sp--;
 }
 
-void Emulator8080::Op0x3C(uint8_t* code)
+void I8080Cpu::Op0x3C(uint8_t* code)
 {
   registers.a += 1;
   FlagsZSP(registers.a);
 }
 
-void Emulator8080::Op0x3D()
+void I8080Cpu::Op0x3D()
 {
   registers.a -= 1;
   FlagsZSP(registers.a);
 }
 
-void Emulator8080::Op0x3E(uint8_t* code)
+void I8080Cpu::Op0x3E(uint8_t* code)
 {
   registers.a = code[1];
   pc++;
 }
 
-void Emulator8080::Op0x3F()
+void I8080Cpu::Op0x3F()
 {
   conditionCodes.cy = 0;
 }
 
-void Emulator8080::Op0x40()
+void I8080Cpu::Op0x40()
 {
   registers.b = registers.b;
 }
 
-void Emulator8080::Op0x41()
+void I8080Cpu::Op0x41()
 {
   registers.b = registers.c;
 }
 
-void Emulator8080::Op0x42()
+void I8080Cpu::Op0x42()
 {
   registers.b = registers.d;
 }
 
-void Emulator8080::Op0x43()
+void I8080Cpu::Op0x43()
 {
   registers.b = registers.e;
 }
 
-void Emulator8080::Op0x44()
+void I8080Cpu::Op0x44()
 {
   registers.b = registers.h;
 }
 
-void Emulator8080::Op0x45()
+void I8080Cpu::Op0x45()
 {
   registers.b = registers.l;
 }
 
-void Emulator8080::Op0x46()
+void I8080Cpu::Op0x46()
 {
   registers.b = ReadFromHL();
 }
 
-void Emulator8080::Op0x47()
+void I8080Cpu::Op0x47()
 {
   registers.b = registers.a;
 }
 
-void Emulator8080::Op0x48()
+void I8080Cpu::Op0x48()
 {
   registers.c = registers.b;
 }
 
-void Emulator8080::Op0x49()
+void I8080Cpu::Op0x49()
 {
   registers.c = registers.c;
 }
 
-void Emulator8080::Op0x4A()
+void I8080Cpu::Op0x4A()
 {
   registers.c = registers.d;
 }
 
-void Emulator8080::Op0x4B()
+void I8080Cpu::Op0x4B()
 {
   registers.c = registers.e;
 }
 
-void Emulator8080::Op0x4C()
+void I8080Cpu::Op0x4C()
 {
   registers.c = registers.h;
 }
 
-void Emulator8080::Op0x4D()
+void I8080Cpu::Op0x4D()
 {
   registers.c = registers.l;
 }
 
-void Emulator8080::Op0x4E()
+void I8080Cpu::Op0x4E()
 {
   registers.c = ReadFromHL();
 }
 
-void Emulator8080::Op0x4F()
+void I8080Cpu::Op0x4F()
 {
   registers.c = registers.a;
 }
 
-void Emulator8080::Op0x50()
+void I8080Cpu::Op0x50()
 {
   registers.d = registers.b;
 }
 
-void Emulator8080::Op0x51()
+void I8080Cpu::Op0x51()
 {
   registers.d = registers.c;
 }
 
-void Emulator8080::Op0x52()
+void I8080Cpu::Op0x52()
 {
   registers.d = registers.d;
 }
 
-void Emulator8080::Op0x53()
+void I8080Cpu::Op0x53()
 {
   registers.d = registers.e;
 }
 
-void Emulator8080::Op0x54()
+void I8080Cpu::Op0x54()
 {
   registers.d = registers.h;
 }
 
-void Emulator8080::Op0x55()
+void I8080Cpu::Op0x55()
 {
   registers.d = registers.l;
 }
 
-void Emulator8080::Op0x56()
+void I8080Cpu::Op0x56()
 {
   registers.d = ReadFromHL();
 }
 
-void Emulator8080::Op0x57()
+void I8080Cpu::Op0x57()
 {
   registers.d = registers.a;
 }
 
-void Emulator8080::Op0x58()
+void I8080Cpu::Op0x58()
 {
   registers.e = registers.b;
 }
 
-void Emulator8080::Op0x59()
+void I8080Cpu::Op0x59()
 {
   registers.e = registers.c;
 }
 
-void Emulator8080::Op0x5A()
+void I8080Cpu::Op0x5A()
 {
   registers.e = registers.d;
 }
 
-void Emulator8080::Op0x5B()
+void I8080Cpu::Op0x5B()
 {
   registers.e = registers.e;
 }
 
-void Emulator8080::Op0x5C()
+void I8080Cpu::Op0x5C()
 {
   registers.e = registers.h;
 }
 
-void Emulator8080::Op0x5D()
+void I8080Cpu::Op0x5D()
 {
   registers.e = registers.l;
 }
 
-void Emulator8080::Op0x5E()
+void I8080Cpu::Op0x5E()
 {
   registers.e = ReadFromHL();
 }
 
-void Emulator8080::Op0x5F()
+void I8080Cpu::Op0x5F()
 {
   registers.e = registers.a;
 }
 
-void Emulator8080::Op0x60()
+void I8080Cpu::Op0x60()
 {
   registers.h = registers.b;
 }
 
-void Emulator8080::Op0x61()
+void I8080Cpu::Op0x61()
 {
   registers.h = registers.c;
 }
 
-void Emulator8080::Op0x62()
+void I8080Cpu::Op0x62()
 {
   registers.h = registers.d;
 }
 
-void Emulator8080::Op0x63()
+void I8080Cpu::Op0x63()
 {
   registers.h = registers.e;
 }
 
-void Emulator8080::Op0x64()
+void I8080Cpu::Op0x64()
 {
   registers.h = registers.h;
 }
 
-void Emulator8080::Op0x65()
+void I8080Cpu::Op0x65()
 {
   registers.h = registers.l;
 }
 
-void Emulator8080::Op0x66()
+void I8080Cpu::Op0x66()
 {
   registers.h = ReadFromHL();
 }
 
-void Emulator8080::Op0x67()
+void I8080Cpu::Op0x67()
 {
   registers.h = registers.a;
 }
 
-void Emulator8080::Op0x68()
+void I8080Cpu::Op0x68()
 {
   registers.l = registers.b;
 }
 
-void Emulator8080::Op0x69()
+void I8080Cpu::Op0x69()
 {
   registers.l = registers.c;
 }
 
-void Emulator8080::Op0x6A()
+void I8080Cpu::Op0x6A()
 {
   registers.l = registers.d;
 }
 
-void Emulator8080::Op0x6B()
+void I8080Cpu::Op0x6B()
 {
   registers.l = registers.e;
 }
 
-void Emulator8080::Op0x6C()
+void I8080Cpu::Op0x6C()
 {
   registers.l = registers.h;
 }
 
-void Emulator8080::Op0x6D()
+void I8080Cpu::Op0x6D()
 {
   registers.l = registers.l;
 }
 
-void Emulator8080::Op0x6E()
+void I8080Cpu::Op0x6E()
 {
   registers.l = ReadFromHL();
 }
 
-void Emulator8080::Op0x6F()
+void I8080Cpu::Op0x6F()
 {
   registers.l = registers.a;
 }
 
-void Emulator8080::Op0x70()
+void I8080Cpu::Op0x70()
 {
   WriteToHL(registers.b);
 }
 
-void Emulator8080::Op0x71()
+void I8080Cpu::Op0x71()
 {
   WriteToHL(registers.c);
 }
 
-void Emulator8080::Op0x72()
+void I8080Cpu::Op0x72()
 {
   WriteToHL(registers.d);
 }
 
-void Emulator8080::Op0x73()
+void I8080Cpu::Op0x73()
 {
   WriteToHL(registers.e);
 }
 
-void Emulator8080::Op0x74()
+void I8080Cpu::Op0x74()
 {
   WriteToHL(registers.h);
 }
 
-void Emulator8080::Op0x75()
+void I8080Cpu::Op0x75()
 {
   WriteToHL(registers.l);
 }
 
-void Emulator8080::Op0x76()
+void I8080Cpu::Op0x76()
 {
   halt = true;
 }
 
-void Emulator8080::Op0x77()
+void I8080Cpu::Op0x77()
 {
   WriteToHL(registers.a);
 }
 
-void Emulator8080::Op0x78()
+void I8080Cpu::Op0x78()
 {
   registers.a = registers.b;
 }
 
-void Emulator8080::Op0x79()
+void I8080Cpu::Op0x79()
 {
   registers.a = registers.c;
 }
 
-void Emulator8080::Op0x7A()
+void I8080Cpu::Op0x7A()
 {
   registers.a = registers.d;
 }
 
-void Emulator8080::Op0x7B()
+void I8080Cpu::Op0x7B()
 {
   registers.a = registers.e;
 }
 
-void Emulator8080::Op0x7C()
+void I8080Cpu::Op0x7C()
 {
   registers.a = registers.h;
 }
 
-void Emulator8080::Op0x7D()
+void I8080Cpu::Op0x7D()
 {
   registers.a = registers.l;
 }
 
-void Emulator8080::Op0x7E()
+void I8080Cpu::Op0x7E()
 {
   registers.a = ReadFromHL();
 }
 
-void Emulator8080::Op0x7F()
+void I8080Cpu::Op0x7F()
 {
   registers.a = registers.a;
 }
 
-void Emulator8080::Op0x80()
+void I8080Cpu::Op0x80()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.b;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x81()
+void I8080Cpu::Op0x81()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.c;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x82()
+void I8080Cpu::Op0x82()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.d;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x83()
+void I8080Cpu::Op0x83()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.e;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x84()
+void I8080Cpu::Op0x84()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.h;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x85()
+void I8080Cpu::Op0x85()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.l;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x86()
+void I8080Cpu::Op0x86()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) ReadFromHL();
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x87()
+void I8080Cpu::Op0x87()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.a;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x88()
+void I8080Cpu::Op0x88()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.b + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x89()
+void I8080Cpu::Op0x89()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.c + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x8A()
+void I8080Cpu::Op0x8A()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.d + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x8B()
+void I8080Cpu::Op0x8B()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.e + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x8C()
+void I8080Cpu::Op0x8C()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.h + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x8D()
+void I8080Cpu::Op0x8D()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.l + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x8E()
+void I8080Cpu::Op0x8E()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) ReadFromHL() + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x8F()
+void I8080Cpu::Op0x8F()
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t) registers.a + conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x90()
+void I8080Cpu::Op0x90()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x91()
+void I8080Cpu::Op0x91()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x92()
+void I8080Cpu::Op0x92()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x93()
+void I8080Cpu::Op0x93()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x94()
+void I8080Cpu::Op0x94()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x95()
+void I8080Cpu::Op0x95()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x96()
+void I8080Cpu::Op0x96()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) ReadFromHL();
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x97()
+void I8080Cpu::Op0x97()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x98()
+void I8080Cpu::Op0x98()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x99()
+void I8080Cpu::Op0x99()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x9A()
+void I8080Cpu::Op0x9A()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x9B()
+void I8080Cpu::Op0x9B()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x9C()
+void I8080Cpu::Op0x9C()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x9D()
+void I8080Cpu::Op0x9D()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x9E()
+void I8080Cpu::Op0x9E()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) ReadFromHL() - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0x9F()
+void I8080Cpu::Op0x9F()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.a - conditionCodes.cy;
   ArithFlagsA(res);
   registers.a = (res & 0xFF);
 }
 
-void Emulator8080::Op0xA0()
+void I8080Cpu::Op0xA0()
 {
   registers.a = registers.a & registers.b;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA1()
+void I8080Cpu::Op0xA1()
 {
   registers.a = registers.a & registers.c;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA2()
+void I8080Cpu::Op0xA2()
 {
   registers.a = registers.a & registers.d;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA3()
+void I8080Cpu::Op0xA3()
 {
   registers.a = registers.a & registers.e;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA4()
+void I8080Cpu::Op0xA4()
 {
   registers.a = registers.a & registers.h;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA5()
+void I8080Cpu::Op0xA5()
 {
   registers.a = registers.a & registers.l;
   LogicFlagsA();
 }
 
 
-void Emulator8080::Op0xA6()
+void I8080Cpu::Op0xA6()
 {
   registers.a = registers.a & ReadFromHL();
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA7()
+void I8080Cpu::Op0xA7()
 {
   registers.a = registers.a & registers.a;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA8()
+void I8080Cpu::Op0xA8()
 {
   registers.a = registers.a ^ registers.b;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xA9()
+void I8080Cpu::Op0xA9()
 {
   registers.a = registers.a ^ registers.c;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xAA()
+void I8080Cpu::Op0xAA()
 {
   registers.a = registers.a ^ registers.d;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xAB()
+void I8080Cpu::Op0xAB()
 {
   registers.a = registers.a ^ registers.e;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xAC()
+void I8080Cpu::Op0xAC()
 {
   registers.a = registers.a ^ registers.h;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xAD()
+void I8080Cpu::Op0xAD()
 {
   registers.a = registers.a ^ registers.l;
   LogicFlagsA();
 }
 
 
-void Emulator8080::Op0xAE()
+void I8080Cpu::Op0xAE()
 {
   registers.a = registers.a ^ ReadFromHL();
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xAF()
+void I8080Cpu::Op0xAF()
 {
   registers.a = registers.a ^ registers.a;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB0()
+void I8080Cpu::Op0xB0()
 {
   registers.a = registers.a | registers.b;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB1()
+void I8080Cpu::Op0xB1()
 {
   registers.a = registers.a | registers.c;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB2()
+void I8080Cpu::Op0xB2()
 {
   registers.a = registers.a | registers.d;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB3()
+void I8080Cpu::Op0xB3()
 {
   registers.a = registers.a | registers.e;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB4()
+void I8080Cpu::Op0xB4()
 {
   registers.a = registers.a | registers.h;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB5()
+void I8080Cpu::Op0xB5()
 {
   registers.a = registers.a | registers.l;
   LogicFlagsA();
 }
 
 
-void Emulator8080::Op0xB6()
+void I8080Cpu::Op0xB6()
 {
   registers.a = registers.a | ReadFromHL();
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB7()
+void I8080Cpu::Op0xB7()
 {
   registers.a = registers.a | registers.a;
   LogicFlagsA();
 }
 
-void Emulator8080::Op0xB8()
+void I8080Cpu::Op0xB8()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.b;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xB9()
+void I8080Cpu::Op0xB9()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.c;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xBA()
+void I8080Cpu::Op0xBA()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.d;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xBB()
+void I8080Cpu::Op0xBB()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.e;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xBC()
+void I8080Cpu::Op0xBC()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.h;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xBD()
+void I8080Cpu::Op0xBD()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) registers.l;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xBE()
+void I8080Cpu::Op0xBE()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t) ReadFromHL();
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xBF()
+void I8080Cpu::Op0xBF()
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t)registers.a;
   ArithFlagsA(res);
 }
 
-void Emulator8080::Op0xC0()
+void I8080Cpu::Op0xC0()
 {
   if (conditionCodes.z == 0)
   {
@@ -1532,12 +1532,12 @@ void Emulator8080::Op0xC0()
   }
 }
 
-void Emulator8080::Op0xC1()
+void I8080Cpu::Op0xC1()
 {
   Pop(&registers.b, &registers.c);
 }
 
-void Emulator8080::Op0xC2(uint8_t* code)
+void I8080Cpu::Op0xC2(uint8_t* code)
 {
   if (conditionCodes.z == 0)
   {
@@ -1549,12 +1549,12 @@ void Emulator8080::Op0xC2(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xC3(uint8_t* code)
+void I8080Cpu::Op0xC3(uint8_t* code)
 {
   pc = (code[2] << 8) | code[1];
 }
 
-void Emulator8080::Op0xC4(uint8_t* code)
+void I8080Cpu::Op0xC4(uint8_t* code)
 {
   if (conditionCodes.z == 0)
   {
@@ -1570,12 +1570,12 @@ void Emulator8080::Op0xC4(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xC5()
+void I8080Cpu::Op0xC5()
 {
   Push(registers.b, registers.c);
 }
 
-void Emulator8080::Op0xC6(uint8_t* code)
+void I8080Cpu::Op0xC6(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t)code[1];
   FlagsZSP(res & 0xFF);
@@ -1584,7 +1584,7 @@ void Emulator8080::Op0xC6(uint8_t* code)
   pc++;
 }
 
-void Emulator8080::Op0xC7()
+void I8080Cpu::Op0xC7()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1593,7 +1593,7 @@ void Emulator8080::Op0xC7()
   pc = 0x0000;
 }
 
-void Emulator8080::Op0xC8()
+void I8080Cpu::Op0xC8()
 {
   if (conditionCodes.z == 1)
   {
@@ -1602,13 +1602,13 @@ void Emulator8080::Op0xC8()
   }
 }
 
-void Emulator8080::Op0xC9()
+void I8080Cpu::Op0xC9()
 {
   pc = (memory[sp + 1] << 8) | memory[sp];
   sp += 2;
 }
 
-void Emulator8080::Op0xCA(uint8_t* code)
+void I8080Cpu::Op0xCA(uint8_t* code)
 {
   if (conditionCodes.z == 1)
   {
@@ -1620,7 +1620,7 @@ void Emulator8080::Op0xCA(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xCC(uint8_t* code)
+void I8080Cpu::Op0xCC(uint8_t* code)
 {
   if (conditionCodes.z == 1)
   {
@@ -1636,7 +1636,7 @@ void Emulator8080::Op0xCC(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xCD(uint8_t* code)
+void I8080Cpu::Op0xCD(uint8_t* code)
 {
     uint16_t retAddress = pc + 2;
     WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1645,7 +1645,7 @@ void Emulator8080::Op0xCD(uint8_t* code)
     pc = (code[2] << 8) | code[1];
 }
 
-void Emulator8080::Op0xCE(uint8_t* code)
+void I8080Cpu::Op0xCE(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a + (uint16_t)code[1] + conditionCodes.cy;
   FlagsZSP(res & 0xFF);
@@ -1654,7 +1654,7 @@ void Emulator8080::Op0xCE(uint8_t* code)
   pc++;
 }
 
-void Emulator8080::Op0xCF()
+void I8080Cpu::Op0xCF()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1663,7 +1663,7 @@ void Emulator8080::Op0xCF()
   pc = 0x0008;
 }
 
-void Emulator8080::Op0xD0()
+void I8080Cpu::Op0xD0()
 {
   if (conditionCodes.cy == 0)
   {
@@ -1672,12 +1672,12 @@ void Emulator8080::Op0xD0()
   }
 }
 
-void Emulator8080::Op0xD1()
+void I8080Cpu::Op0xD1()
 {
   Pop(&registers.d, &registers.e);
 }
 
-void Emulator8080::Op0xD2(uint8_t* code)
+void I8080Cpu::Op0xD2(uint8_t* code)
 {
   if (conditionCodes.cy == 0)
   {
@@ -1690,13 +1690,13 @@ void Emulator8080::Op0xD2(uint8_t* code)
 }
 
 
-void Emulator8080::Op0xD3(uint8_t* code)
+void I8080Cpu::Op0xD3(uint8_t* code)
 {
   //TODO: Implement OUT
   pc++;
 }
 
-void Emulator8080::Op0xD4(uint8_t* code)
+void I8080Cpu::Op0xD4(uint8_t* code)
 {
   if (conditionCodes.cy == 0)
   {
@@ -1712,12 +1712,12 @@ void Emulator8080::Op0xD4(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xD5()
+void I8080Cpu::Op0xD5()
 {
   Push(registers.d, registers.e);
 }
 
-void Emulator8080::Op0xD6(uint8_t* code)
+void I8080Cpu::Op0xD6(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t)code[1];
   FlagsZSP(res & 0xFF);
@@ -1726,7 +1726,7 @@ void Emulator8080::Op0xD6(uint8_t* code)
   pc++;
 }
 
-void Emulator8080::Op0xD7()
+void I8080Cpu::Op0xD7()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1735,7 +1735,7 @@ void Emulator8080::Op0xD7()
   pc = 0x0010;
 }
 
-void Emulator8080::Op0xD8()
+void I8080Cpu::Op0xD8()
 {
   if (conditionCodes.cy)
   {
@@ -1744,7 +1744,7 @@ void Emulator8080::Op0xD8()
   }
 }
 
-void Emulator8080::Op0xDA(uint8_t* code)
+void I8080Cpu::Op0xDA(uint8_t* code)
 {
   if (conditionCodes.cy)
   {
@@ -1756,13 +1756,13 @@ void Emulator8080::Op0xDA(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xDB(uint8_t* code)
+void I8080Cpu::Op0xDB(uint8_t* code)
 {
   //TODO: Implement IN
   pc++;
 }
 
-void Emulator8080::Op0xDC(uint8_t* code)
+void I8080Cpu::Op0xDC(uint8_t* code)
 {
   if (conditionCodes.cy)
   {
@@ -1778,7 +1778,7 @@ void Emulator8080::Op0xDC(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xDE(uint8_t* code)
+void I8080Cpu::Op0xDE(uint8_t* code)
 {
   uint16_t res = (uint16_t)registers.a - (uint16_t)code[1] - conditionCodes.cy;
   FlagsZSP(res & 0xFF);
@@ -1787,7 +1787,7 @@ void Emulator8080::Op0xDE(uint8_t* code)
   pc++;
 }
 
-void Emulator8080::Op0xDF()
+void I8080Cpu::Op0xDF()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1796,7 +1796,7 @@ void Emulator8080::Op0xDF()
   pc = 0x0018;
 }
 
-void Emulator8080::Op0xE0()
+void I8080Cpu::Op0xE0()
 {
   if (conditionCodes.p == 0)
   {
@@ -1805,12 +1805,12 @@ void Emulator8080::Op0xE0()
   }
 }
 
-void Emulator8080::Op0xE1()
+void I8080Cpu::Op0xE1()
 {
   Pop(&registers.h, &registers.l);
 }
 
-void Emulator8080::Op0xE2(uint8_t* code)
+void I8080Cpu::Op0xE2(uint8_t* code)
 {
   if (conditionCodes.p == 0)
   {
@@ -1822,7 +1822,7 @@ void Emulator8080::Op0xE2(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xE3()
+void I8080Cpu::Op0xE3()
 {
 
   uint8_t high = registers.h;
@@ -1833,7 +1833,7 @@ void Emulator8080::Op0xE3()
   WriteMem(sp, low);
 }
 
-void Emulator8080::Op0xE4(uint8_t* code)
+void I8080Cpu::Op0xE4(uint8_t* code)
 {
   if (conditionCodes.p == 0)
   {
@@ -1849,19 +1849,19 @@ void Emulator8080::Op0xE4(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xE5()
+void I8080Cpu::Op0xE5()
 {
   Push(registers.h, registers.l);
 }
 
-void Emulator8080::Op0xE6(uint8_t* code)
+void I8080Cpu::Op0xE6(uint8_t* code)
 {
   registers.a =  registers.a & code[1];
   LogicFlagsA();
   pc++;
 }
 
-void Emulator8080::Op0xE7()
+void I8080Cpu::Op0xE7()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1870,7 +1870,7 @@ void Emulator8080::Op0xE7()
   pc = 0x0020;
 }
 
-void Emulator8080::Op0xE8()
+void I8080Cpu::Op0xE8()
 {
   if (conditionCodes.p == 1)
   {
@@ -1879,12 +1879,12 @@ void Emulator8080::Op0xE8()
   }
 }
 
-void Emulator8080::Op0xE9()
+void I8080Cpu::Op0xE9()
 {
   pc = (registers.h << 8) | registers.l;
 }
 
-void Emulator8080::Op0xEA(uint8_t* code)
+void I8080Cpu::Op0xEA(uint8_t* code)
 {
   if (conditionCodes.p == 1)
   {
@@ -1896,7 +1896,7 @@ void Emulator8080::Op0xEA(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xEB()
+void I8080Cpu::Op0xEB()
 {
 
   uint8_t save1 = registers.d;
@@ -1907,7 +1907,7 @@ void Emulator8080::Op0xEB()
   registers.l = save2;
 }
 
-void Emulator8080::Op0xEC(uint8_t* code)
+void I8080Cpu::Op0xEC(uint8_t* code)
 {
   if (conditionCodes.p == 1)
   {
@@ -1923,14 +1923,14 @@ void Emulator8080::Op0xEC(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xEE(uint8_t* code)
+void I8080Cpu::Op0xEE(uint8_t* code)
 {
   registers.a =  registers.a ^ code[1];
   LogicFlagsA();
   pc++;
 }
 
-void Emulator8080::Op0xEF()
+void I8080Cpu::Op0xEF()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -1939,7 +1939,7 @@ void Emulator8080::Op0xEF()
   pc = 0x0028;
 }
 
-void Emulator8080::Op0xF0()
+void I8080Cpu::Op0xF0()
 {
   if (conditionCodes.s == 0)
   {
@@ -1948,7 +1948,7 @@ void Emulator8080::Op0xF0()
   }
 }
 
-void Emulator8080::Op0xF1()
+void I8080Cpu::Op0xF1()
 {
   registers.a = memory[sp + 1];
   uint8_t psw = memory[sp];
@@ -1960,7 +1960,7 @@ void Emulator8080::Op0xF1()
   sp += 2;
 }
 
-void Emulator8080::Op0xF2(uint8_t* code)
+void I8080Cpu::Op0xF2(uint8_t* code)
 {
   if (conditionCodes.s == 0)
   {
@@ -1972,12 +1972,12 @@ void Emulator8080::Op0xF2(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xF3()
+void I8080Cpu::Op0xF3()
 {
   interuptEnabled = false;
 }
 
-void Emulator8080::Op0xF4(uint8_t* code)
+void I8080Cpu::Op0xF4(uint8_t* code)
 {
   if (conditionCodes.s == 0)
   {
@@ -1993,7 +1993,7 @@ void Emulator8080::Op0xF4(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xF5()
+void I8080Cpu::Op0xF5()
 {
   uint8_t psw = (
     conditionCodes.s << 7 |
@@ -2008,7 +2008,7 @@ void Emulator8080::Op0xF5()
   sp -= 2;
 }
 
-void Emulator8080::Op0xF6(uint8_t* code)
+void I8080Cpu::Op0xF6(uint8_t* code)
 {
   uint8_t res = registers.a | code[1];
   FlagsZSP(res);
@@ -2017,7 +2017,7 @@ void Emulator8080::Op0xF6(uint8_t* code)
   pc++;
 }
 
-void Emulator8080::Op0xF7()
+void I8080Cpu::Op0xF7()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -2027,7 +2027,7 @@ void Emulator8080::Op0xF7()
 }
 
 
-void Emulator8080::Op0xF8()
+void I8080Cpu::Op0xF8()
 {
   if (conditionCodes.s == 1)
   {
@@ -2036,12 +2036,12 @@ void Emulator8080::Op0xF8()
   }
 }
 
-void Emulator8080::Op0xF9()
+void I8080Cpu::Op0xF9()
 {
   sp = (registers.h << 8) | registers.l;
 }
 
-void Emulator8080::Op0xFA(uint8_t* code)
+void I8080Cpu::Op0xFA(uint8_t* code)
 {
   if (conditionCodes.s)
   {
@@ -2053,12 +2053,12 @@ void Emulator8080::Op0xFA(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xFB()
+void I8080Cpu::Op0xFB()
 {
   interuptEnabled = true;
 }
 
-void Emulator8080::Op0xFC(uint8_t* code)
+void I8080Cpu::Op0xFC(uint8_t* code)
 {
   if (conditionCodes.s)
   {
@@ -2074,7 +2074,7 @@ void Emulator8080::Op0xFC(uint8_t* code)
   }
 }
 
-void Emulator8080::Op0xFE(uint8_t* code)
+void I8080Cpu::Op0xFE(uint8_t* code)
 {
   uint8_t res = registers.a - code[1];
   FlagsZSP(res);
@@ -2082,7 +2082,7 @@ void Emulator8080::Op0xFE(uint8_t* code)
   pc++;
 }
 
-void Emulator8080::Op0xFF()
+void I8080Cpu::Op0xFF()
 {
   uint16_t retAddress = pc + 2;
   WriteMem(sp - 1, (retAddress >> 8) & 0xFF);
@@ -2091,7 +2091,7 @@ void Emulator8080::Op0xFF()
   pc = 0x0038;
 }
 
-void Emulator8080::UnimplementedOp(uint8_t* code)
+void I8080Cpu::UnimplementedOp(uint8_t* code)
 {
   pc--;
   printf("%04x %02x ", pc, code[0]);
@@ -2099,7 +2099,7 @@ void Emulator8080::UnimplementedOp(uint8_t* code)
   halt = true;
 }
 
-void Emulator8080::GenerateInterupt(int interuptNum)
+void I8080Cpu::GenerateInterupt(int interuptNum)
 {
   Push((pc & 0xFF00) >> 8, pc & 0xFF);
   pc = 0x08 * interuptNum;
