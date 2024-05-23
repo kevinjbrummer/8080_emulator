@@ -49,7 +49,6 @@ void Display::Update(uint8_t* buffer)
 {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
-  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
   SDL_Rect* destRect = new SDL_Rect;
   destRect->x = 0;
   destRect->y = 0;
@@ -68,6 +67,14 @@ void Display::Update(uint8_t* buffer)
         uint8_t bit = (byte >> i) & 0x1;
         if (bit == 1)
         {
+          if (y*8 >= 10 && y*8 <= 60)
+          {
+            SDL_SetRenderDrawColor(renderer, 57, 255, 20, 255); //green
+          }
+          else
+          {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); //white
+          }
           destRect->y = ((screenHeight - (y*8) + (7 - i)))  * 3;
           destRect->x = x * 3;
           SDL_RenderFillRect(renderer, destRect);
