@@ -32,6 +32,7 @@ class Cabinet
     std::chrono::time_point<std::chrono::high_resolution_clock> lastInterrupt;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastCycleTimer;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastDrawTimer;
+    bool quit;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> GetCurrentTime();
     uint8_t GetInput(uint8_t port);
