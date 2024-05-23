@@ -28,16 +28,16 @@ Multimedia::Multimedia(char const* title)
 
 bool Multimedia::InitVideo(char const* title)
 {
-  window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_BASE * 3, SCREEN_HEIGHT_BASE * 3, SDL_WINDOW_SHOWN);
+  vfx.window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_BASE * 3, SCREEN_HEIGHT_BASE * 3, SDL_WINDOW_SHOWN);
 
-  if (window == NULL)
+  if (vfx.window == NULL)
   {
     printf("Could not create Window. Error: %s\n", SDL_GetError());
     return false;
   }
 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  if (renderer == NULL)
+  vfx.renderer = SDL_CreateRenderer(vfx.window, -1, SDL_RENDERER_ACCELERATED);
+  if (vfx.renderer == NULL)
   {
     printf("Could not create renderer. Error: %s\n", SDL_GetError());
     return false;
@@ -147,16 +147,16 @@ Multimedia::~Multimedia()
   Mix_FreeChunk(sfx.fleetMovement4);
   Mix_FreeChunk(sfx.insertCoin);
   Mix_FreeChunk(sfx.ufoHit);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+  SDL_DestroyRenderer(vfx.renderer);
+  SDL_DestroyWindow(vfx.window);
   Mix_Quit();
   SDL_Quit();
 }
 
 void Multimedia::Update(uint8_t* buffer)
 {
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-  SDL_RenderClear(renderer);
+  SDL_SetRenderDrawColor(vfx.renderer, 0, 0, 0, 255);
+  SDL_RenderClear(vfx.renderer);
   SDL_Rect* destRect = new SDL_Rect;
   destRect->x = 0;
   destRect->y = 0;
@@ -177,15 +177,15 @@ void Multimedia::Update(uint8_t* buffer)
         {
           if (y*8 >= 10 && y*8 <= 60)
           {
-            SDL_SetRenderDrawColor(renderer, 57, 255, 20, 255); //green
+            SDL_SetRenderDrawColor(vfx.renderer, 57, 255, 20, 255); //green
           }
           else
           {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); //white
+            SDL_SetRenderDrawColor(vfx.renderer, 255, 255, 255, 255); //white
           }
           destRect->y = ((SCREEN_HEIGHT_BASE - (y*8) + (7 - i)))  * 3;
           destRect->x = x * 3;
-          SDL_RenderFillRect(renderer, destRect);
+          SDL_RenderFillRect(vfx.renderer, destRect);
 
         }
       }
@@ -194,7 +194,7 @@ void Multimedia::Update(uint8_t* buffer)
 
   delete destRect;
 
-  SDL_RenderPresent(renderer);
+  SDL_RenderPresent(vfx.renderer);
 }
 
 bool Multimedia::ProcessInput(uint8_t* port1, uint8_t* port2)

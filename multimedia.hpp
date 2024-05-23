@@ -16,6 +16,11 @@ struct SoundEffects {
     Mix_Chunk* insertCoin{};
 };
 
+struct VisualEffects {
+  SDL_Window* window{};
+  SDL_Renderer* renderer{};
+};
+
 class Multimedia
 {
   public:
@@ -26,15 +31,9 @@ class Multimedia
     void ToggleMusic();
     void PlayPortSounds(uint8_t value, uint8_t prevValue, int port);
   private:
-    SDL_Window* window{};
-    SDL_Renderer* renderer{};
-    SDL_Texture* texture{};
-
+    VisualEffects vfx;
     SoundEffects sfx;
     int ufoChannel;
-
-
-
     bool InitVideo(char const* title);
     bool InitAudio();
 };
