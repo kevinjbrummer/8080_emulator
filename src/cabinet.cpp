@@ -148,7 +148,6 @@ void Cabinet::Boot()
     exit(EXIT_FAILURE);
   }
 
-  multimedia.ToggleMusic();
   while (!quit)
   {
 

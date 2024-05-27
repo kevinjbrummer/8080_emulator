@@ -282,6 +282,9 @@ bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
               ToggleMusic();
               isPaused = !isPaused;
               break;
+            case SDLK_m:
+              ToggleMusic();
+              break;
             default: break;
           }
         }
