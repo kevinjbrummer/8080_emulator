@@ -279,7 +279,10 @@ bool Multimedia::HandleEvents(uint8_t* port1, uint8_t* port2)
               }
               break;
             case SDLK_p:
-              ToggleMusic();
+              if (Mix_PlayingMusic())
+              {
+                ToggleMusic();
+              }
               isPaused = !isPaused;
               break;
             case SDLK_m:
